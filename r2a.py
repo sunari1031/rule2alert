@@ -5,16 +5,14 @@ from optparse import OptionParser
 import os,sys
 
 class r2a:
-	
+	def __init__(self, options):
+		self.options = options
+		self.snort_vars = self.parseConf(self.options.snort_conf)
+		self.rules = self.loadRules(self.options.rule_file)
 
-	def main(self, options):
-		#Parse the snort config
-		var = self.parseConf(options.snort_conf)
+	def main(self):
 
-		#Parse snort rule file
-		rules = self.loadRules(options.rule_file)
-
-		for snort_rule in rules:
+		for snort_rule in self.rules:
 			snort_rule = snort_rule.strip()
 			r = Rule(snort_rule)
 
@@ -30,7 +28,28 @@ class r2a:
 		return rules
 
 	def parseConf(self, snort_conf):
-		return 1
+		f = open(snort_conf, 'r')
+		conf = f.read().splitlines()
+		f.close()
+
+		snort_vars = {}
+
+		for line in conf:
+			if line.startswith("var"):
+				var, data = line[4:].split(" ")
+				if data[1:] in snort_vars:
+					data = snort_vars[data[1:]]
+				snort_vars[var] = data
+			elif line.startswith("portvar"):
+				var, data = line[8:].split(" ")
+				if data[1:] in snort_vars:
+					data = snort_vars[data[1:]]
+				snort_vars[var] = data
+				
+
+		return snort_vars
+				
+				
 
 	
 
@@ -44,8 +63,8 @@ def parseArgs():
 
 	(options, args) = parser.parse_args(sys.argv)
 
-	r = r2a()
-	r.main(options)
+	r = r2a(options)
+	r.main()
 
 if __name__ == "__main__":
 	parseArgs()
