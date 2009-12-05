@@ -42,7 +42,11 @@ class trigger:
 		header, body = sig.split("(")
 		type, proto, self.src, self.sport, a, self.dst, self.dport = header.strip().split(" ")
 		
-		handshake = self.handle_proto(proto)
+		self.handle_proto(proto)
+
+		self.set_flow()
+		
+		handshake = self.build_handshake()
 
 		body = body[:-2]
 
@@ -88,7 +92,7 @@ class trigger:
 				i += 1
 				continue
 
-		self.set_flow()
+		#self.set_flow()
 
 		return c_objs,handshake
 
@@ -143,6 +147,9 @@ class trigger:
 
 		m = False
 
+		print "External Net: %s" % self.ext_net
+		print "Internal Net: %s" % self.home_net
+
 		if self.dst in home_servs:
 			#Going to internal net
 			self.flow.src = self.ext_net
@@ -157,12 +164,8 @@ class trigger:
 	def handle_proto(self,p):
 		if p == "tcp":
 			self.protocol = TCP()
-			print "Building Handshake"
-			handshake = self.build_handshake()
 		elif p == "udp":
 			self.protocol = UDP()
-
-		return handshake
 		
 	def get_flow(self):
 		return self.flow
@@ -171,7 +174,7 @@ class trigger:
 		#Create the ISN Numbers
 		client = 1932
 		server = 1059
-	
+
 		#Create the SYN Packet
 		syn = Ether()/IP(src=self.flow.src, dst=self.flow.dst)/TCP(flags="S", sport=self.protocol.sport, dport=self.protocol.dport, seq=client)
 	
