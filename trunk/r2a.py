@@ -9,15 +9,59 @@ class r2a:
 		self.options = options
 		self.snort_vars = self.parseConf(self.options.snort_conf)
 		self.rules = self.loadRules(self.options.rule_file)
+		self.source = ""
+		self.sport = ""
+		self.dest = ""
+		self.dport = ""
+		self.proto = ""
+		self.flow = IP()
 
 	def main(self):
 
 		for snort_rule in self.rules:
 			snort_rule = snort_rule.strip()
 			r = Rule(snort_rule)
+	
+			self.source = self.snort_vars[r.rawsources[1:]]
+			self.dest   = self.snort_vars[r.rawdestinations[1:]]
+			self.proto  = r.proto
 
-			print r.rawdestinations
-			print r.rawsources
+			if self.proto == "tcp":
+				self.proto = TCP()
+			elif self.proto == "udp":
+				self.proto = UDP()
+
+			print self.source
+			print self.dest
+
+			self.parseComm(r.rawsrcports, r.rawdesports)
+
+			print "%s:%s -> %s:%s" % (self.source, self.sport, self.dest, self.dport)
+
+	def parseComm(self, sports, dports):
+		if self.source.find("/") != -1:
+			self.source = self.source.split("/")[0]
+			self.source = "%s.%s" % (self.source[:self.source.rfind(".")],"1")
+		if self.dest.find("/") != -1:
+			self.dest = self.dest.split("/")[0]
+			self.dest = "%s.%s" % (self.dest[:self.dest.rfind(".")],"1")
+		if self.source == "any":
+			self.source = "1.1.1.1"
+		if self.dest == "any":
+			self.dest = "1.1.1.1"
+
+		if sports[1:] in self.snort_vars:
+			self.sport = self.snort_vars[sports[1:]]
+		elif sports == "any":
+			self.sport = "9001"
+		else:
+			self.sport = sports
+
+		if dports[1:] in self.snort_vars:
+			self.dport = self.snort_vars[dports[1:]]
+		else:
+			self.dport = dports
+
 		
 
 	def loadRules(self, rule_file):
