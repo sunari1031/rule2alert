@@ -45,13 +45,34 @@ class r2a:
 			elif self.proto == "udp":
 				self.proto = UDP()
 
-			print self.source
-			print self.dest
-
 			#Sets flow options based on snort alert
 			self.parseComm(r.rawsrcports, r.rawdesports)
+			
+			handshake = self.handshake()
 
 			print "%s:%s -> %s:%s" % (self.source, self.sport, self.dest, self.dport)
+
+	#Make TCP Handshake based off snort rule direction and src/dst attributes
+	def handshake(self):
+		#Client ISN
+		client_isn = 1932
+		#Server ISN
+		server_isn = 1059
+
+		#Create the SYN Packet sent from the client to the server
+		syn = Ether()/IP(src=self.flow.src, dst=self.flow.dst)/TCP(flags="S", sport=self.proto.sport, dport=self.proto.dport, seq=client_isn)
+
+		#Create the SYN/ACK Packet returned from the server
+		syn_ack = Ether()/IP(src=self.flow.dst, dst=self.flow.src)/TCP(flags="SA", sport=self.proto.dport, dport=self.proto.sport, seq=server_isn, ack=syn.seq+1)
+		
+		#Create the ACK returned from the client
+		ack = Ether()/IP(src=self.flow.src, dst=self.flow.dst)/TCP(flags="A", sport=self.proto.sport, dport=self.proto.dport, seq=syn.seq+1, ack=syn_ack.seq+1)
+
+		handshake = [syn, syn_ack, ack]
+		for p in handshake:
+			print p.summary()
+
+		return handshake
 	
 	#Parses the snort rule configuration to generate a flow
 	#Which is later used in the packet generation
@@ -71,6 +92,9 @@ class r2a:
 		if self.dest == "any":
 			self.dest = "1.1.1.1"
 
+		self.flow.src = self.source
+		self.flow.dst = self.dest
+
 		#Do the same type of thing for ports
 		if sports[1:] in self.snort_vars:
 			self.sport = self.snort_vars[sports[1:]]
@@ -83,6 +107,9 @@ class r2a:
 			self.dport = self.snort_vars[dports[1:]]
 		else:
 			self.dport = dports
+
+		self.proto.sport = int(self.sport)
+		self.proto.dport = int(self.dport)
 
 		
 	#Reads in the rule file specified by the user
