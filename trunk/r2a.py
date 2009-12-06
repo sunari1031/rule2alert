@@ -5,27 +5,41 @@ from optparse import OptionParser
 import os,sys
 
 class r2a:
+	#Initial function sets global variables used throughout the class
+	#Calls parseConf and loadRules to parse the snort configuration
+	#file as well as load in the snort rules to generate packets
 	def __init__(self, options):
+		#Command line options
 		self.options = options
+		#Snort conf variables
 		self.snort_vars = self.parseConf(self.options.snort_conf)
+		#Snort rules
 		self.rules = self.loadRules(self.options.rule_file)
+		#IP Source Address
 		self.source = ""
+		#Source Port
 		self.sport = ""
+		#IP Destination Address
 		self.dest = ""
+		#Destination Port
 		self.dport = ""
+		#Transport Layer Protocol
 		self.proto = ""
+		#Set generic IP layer
 		self.flow = IP()
 
 	def main(self):
-
+		#Go through each snort rule
 		for snort_rule in self.rules:
 			snort_rule = snort_rule.strip()
+			#Parse the snort rule using the snort parser
 			r = Rule(snort_rule)
 	
 			self.source = self.snort_vars[r.rawsources[1:]]
 			self.dest   = self.snort_vars[r.rawdestinations[1:]]
 			self.proto  = r.proto
 
+			#Set the transport layer based on the protocol
 			if self.proto == "tcp":
 				self.proto = TCP()
 			elif self.proto == "udp":
@@ -34,22 +48,30 @@ class r2a:
 			print self.source
 			print self.dest
 
+			#Sets flow options based on snort alert
 			self.parseComm(r.rawsrcports, r.rawdesports)
 
 			print "%s:%s -> %s:%s" % (self.source, self.sport, self.dest, self.dport)
-
+	
+	#Parses the snort rule configuration to generate a flow
+	#Which is later used in the packet generation
 	def parseComm(self, sports, dports):
+		#If the source is using CIDR notiation
+		#Just pick the first IP in the subnet
 		if self.source.find("/") != -1:
 			self.source = self.source.split("/")[0]
 			self.source = "%s.%s" % (self.source[:self.source.rfind(".")],"1")
+		#Same for the dst
 		if self.dest.find("/") != -1:
 			self.dest = self.dest.split("/")[0]
 			self.dest = "%s.%s" % (self.dest[:self.dest.rfind(".")],"1")
+		#If any on either src or dst just use any IP
 		if self.source == "any":
 			self.source = "1.1.1.1"
 		if self.dest == "any":
 			self.dest = "1.1.1.1"
 
+		#Do the same type of thing for ports
 		if sports[1:] in self.snort_vars:
 			self.sport = self.snort_vars[sports[1:]]
 		elif sports == "any":
@@ -63,7 +85,7 @@ class r2a:
 			self.dport = dports
 
 		
-
+	#Reads in the rule file specified by the user
 	def loadRules(self, rule_file):
 		f = open(rule_file, 'r')
 		rules = f.read().splitlines()
@@ -71,6 +93,9 @@ class r2a:
 
 		return rules
 
+	#Parses the snort configuration for all variables
+	#This is mostly used to grab variables such as
+	#$HOME_NET and $EXTERNAL_NET
 	def parseConf(self, snort_conf):
 		f = open(snort_conf, 'r')
 		conf = f.read().splitlines()
@@ -96,7 +121,7 @@ class r2a:
 				
 
 	
-
+#Parses arguments that are passed in through the cli
 def parseArgs():
 	usage = "usage: ./r2a.py -f rule_file -c snort_config -w pcap"
 	parser = OptionParser(usage)
