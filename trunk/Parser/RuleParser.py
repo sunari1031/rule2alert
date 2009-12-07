@@ -5,7 +5,7 @@
 #
 
 
-import re
+import re,sys
 
 class RuleUriContent:
     def __init__(self, uricontent):
@@ -241,9 +241,14 @@ class Rule:
                     continue
 
                 # modifiers for contents
-                if len(self.contents) > 0:
-                    for clast in self.contents:
-                        pass
+                #if len(self.contents) > 0:
+                #    for clast in self.contents:
+                 #       pass
+		clast = ""
+		if len(self.contents) > 0:
+			clast = self.contents[-1]
+		else:
+			continue
                 if k == "nocase":
                     clast.nocase = v
                     continue
