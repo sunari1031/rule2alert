@@ -244,11 +244,11 @@ class Rule:
                 #if len(self.contents) > 0:
                 #    for clast in self.contents:
                  #       pass
-		clast = ""
-		if len(self.contents) > 0:
-			clast = self.contents[-1]
-		else:
-			continue
+                clast = ""
+                if len(self.contents) > 0:
+                    clast = self.contents[-1]
+                else:
+                    continue
                 if k == "nocase":
                     clast.nocase = v
                     continue
