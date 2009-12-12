@@ -1,4 +1,3 @@
-from Parser.RuleParser import Rule
 import struct
 from binascii import *
 from ctypes import create_string_buffer
