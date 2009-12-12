@@ -2,7 +2,7 @@ import struct
 from binascii import *
 from ctypes import create_string_buffer
 
-class PayloadGenrator:
+class PayloadGenerator:
     payload = None
     contents = []
     def __init__(self, rule_contents):

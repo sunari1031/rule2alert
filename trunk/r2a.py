@@ -1,5 +1,6 @@
 #!/usr/bin/python
 from Parser.RuleParser import *
+from Generator.Payload import *
 from scapy.all import *
 from optparse import OptionParser
 import os,sys
@@ -52,7 +53,11 @@ class r2a:
 
 			print "%s:%s -> %s:%s" % (self.source, self.sport, self.dest, self.dport)
 
-			print r
+			ContentGen = PayloadGenerator(r.content)
+
+			payload = ContentGen.build()
+
+			print payload.raw
 
 	#Make TCP Handshake based off snort rule direction and src/dst attributes
 	def handshake(self):
