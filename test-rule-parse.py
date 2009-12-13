@@ -16,3 +16,5 @@ for c in r.contents:
 '''
 
 print r
+for c in r.contents:
+    print c
