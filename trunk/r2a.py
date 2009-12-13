@@ -32,15 +32,17 @@ class r2a:
 
     def main(self):
         #Regexp for avoid comments and empty lines
-        p = re.compile(r'^\*#|^\s*$')
+        pcomments = re.compile('^\s*#')
+        pemptylines = re.compile('^\s*$')
         rules_loaded = 0
         #Go through each snort rule
         for snort_rule in self.rules:
             snort_rule = snort_rule.strip()
             #Parse the snort rule using the snort parser
-            m = p.search(snort_rule)
+            comments = pcomments.search(snort_rule)
+            emptylines = pemptylines.search(snort_rule)
             #If it's not a comment or an empty line...
-            if not m:
+            if not comments and not emptylines:
                 try:
                     r = Rule(snort_rule)
                     self.source = self.snort_vars[r.rawsources[1:]]
