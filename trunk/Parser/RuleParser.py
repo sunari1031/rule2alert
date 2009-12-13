@@ -76,7 +76,7 @@ class RuleContent:
             if not self.negated:
                 self.payload = tmp
             else:
-                for i in range(0,tmp):
+                for i in range(0,len(tmp)):
                     # We start changing the first char, so if the length is 1, we have no problem
                     if i % 2 == 0:
                         # We copy the payload with changed values (so it should not match)
