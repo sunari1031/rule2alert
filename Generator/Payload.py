@@ -123,6 +123,7 @@ class PayloadGenerator:
             else:
                 str = str + "\\x" + hexlify(c)
         str = str + "\n--------- Ascii Payload End -----------\n"
+        return str
             
     def PrintOffsets(self):
         print " Start        End"        
