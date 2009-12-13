@@ -127,6 +127,8 @@ class r2a:
 
         if dports[1:] in self.snort_vars:
             self.dport = self.snort_vars[dports[1:]]
+	elif dports == "any":
+		self.dport = "9001"
         else:
             self.dport = dports
 
