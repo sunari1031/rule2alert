@@ -1,11 +1,14 @@
-# This code is published under GPL License Terms
+# This code is published under GPL v2 License Terms
 #
 # Descrpition: General Purpose rule parser
-# Author: Pablo Rincon Crespo 5/12/2009
 #
-
+# Author: Pablo Rincon Crespo 
+# Author: Josh Smith
+#
+# 5/12/2009
 
 import re,sys
+from binascii import *
 
 class RuleUriContent:
     def __init__(self, uricontent):
@@ -27,6 +30,8 @@ class RuleUriContent:
         return r + "\n"
 
 class RuleContent:
+    content = ""
+    payload = None
     def __init__(self, content):
         # check for negated content option
         if content[0] == "!":
@@ -38,6 +43,51 @@ class RuleContent:
         # Strip quotes.. "'s
         if self.content[0] == '"':
             self.content = self.content[1:-1]
+
+        # build payload (to avoid hex)
+        self.payload = ''
+        if len(self.content) > 0: 
+            flag=0
+            tmp = ""
+            i = 0
+            while i < len(self.content):
+                if self.content[i]=="|" and (i>0 and self.content[i-1]!='\\' or i==0) and flag == 0:
+                    flag = 1
+                    i = i + 1
+                    continue
+
+                if self.content[i]=="|" and i>0 and self.content[i-1]!='\\' and flag == 1:
+                    flag = 0
+                    i = i + 1
+                    continue
+
+                if self.content[i]==" " and flag == 1:
+                    i = i + 1
+                    continue
+
+                if flag == 1:
+                    tmp = tmp + a2b_hex(self.content[i:i+2])
+                    i = i + 1
+                else:
+                    tmp = tmp + self.content[i]
+                    
+                i = i + 1
+
+            if not self.negated:
+                self.payload = tmp
+            else:
+                for i in range(0,tmp):
+                    # We start changing the first char, so if the length is 1, we have no problem
+                    if i % 2 == 0:
+                        # We copy the payload with changed values (so it should not match)
+                        if tmp[i] != ".":
+                            self.payload = "."
+                        else:
+                            # if the character we were going to replace with a dot, was a dot, use another, so now, the payload is really different
+                            self.payload = "-"
+                    else:
+                        self.payload = tmp[i]
+
         self.nocase = None
         self.rawbytes = None
         self.depth = None
@@ -55,6 +105,8 @@ class RuleContent:
         r = "RuleContent:\n"
         r = r + " - content: "+ self.content
         r = r + "\n" + " - negated: "+ str(self.negated)
+        r = r + "\n" + " - real payload: \n--START--\n"+ str(self.payload) + "\n--END--"
+        r = r + "\n" + " - real payload length: "+ str(len(self.payload))
         r = r + "\n" + " - nocase: "+ str(self.nocase)
         r = r + "\n" + " - rawbytes: "+ str(self.rawbytes)
         r = r + "\n" + " - depth: "+ str(self.depth)
