@@ -148,3 +148,35 @@ class PayloadGenerator:
             
 # We should deal with the http modifiers (skiping by now)
 #
+class HTTPHeader:
+
+	def __init__(self, rule_contents):
+		self.contents = rule_contents
+		#We need to set defaults for HTTP headers
+		#These can be changed depending on the rule
+		self.method  	= ""
+		self.uri     	= "/"
+		self.version    = "HTTP/1.1"
+		self.host       = "www.malforge.com"
+		self.user_agent = "Mozilla/5.0 (Windows; U; Windows NT 6.1; en-US; rv:1.9.1.5) Gecko/20091102 Firefox/3.5.5 (.NET CLR 3.5.30729)"
+		self.accept		= ""
+		self.accept_language = "en-us,en;q=0.5"
+		self.accept_encoding = "gzip,deflate"
+		self.accept_charset  = "ISO-8859-1,utf-8;q=0.7,*;q=0.7"
+		self.keep_alive = "300"
+		self.connection = "keep-alive"
+		
+	def build(self):
+		#Build the HTTP header
+		http_header = "%s %s %s\r\n%s\r\n%s\r\n%s\r\n%s\r\n%s\r\n%s\r\n%s\r\n%\r\n\r\n" % (self.method, self.uri, self.version, self.host, self.user_agent, self.accept, self.accept_language, self.accept_encoding, self.accept_charset, self.keep_alive, self.connection)
+
+		return http_header
+
+	def build_uri(self, content):
+		uri_content = ""
+		#Here we need to go through the content passed in
+		#The content will have modifiers so we need to determine
+		#how many bytes are before it, and after it
+
+		#At the end, we add on the new uri_content to the header uri
+		#self.uri += uri_content
