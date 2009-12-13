@@ -27,13 +27,13 @@ class PayloadGenerator:
                 c.end = c.ini + len(c.content)
 
             if c.offset and not oldc:
-                c.ini = c.ini + offset
-                c.end = c.end + offset
+                c.ini = c.ini + c.offset
+                c.end = c.end + c.offset
 
             if c.offset and oldc:
                 # Here we should check for conflicts
                 if c.ini < c.offset:
-                    c.ini = offset
+                    c.ini = c.offset
                     c.end = c.ini + len(c.content)
 
             if c.distance and oldc:
@@ -102,25 +102,27 @@ class PayloadGenerator:
         return self.payload
 
     def hexPrint(self):
-        print "-------- Hex Payload Start ----------"
+        str = ''
+        str = str + "-------- Hex Payload Start ----------\n"
         for i in range(0,len(self.payload)):
-            sys.stdout.write(" " + hexlify(self.payload[i]))
+            str = str + " " + hexlify(self.payload[i])
             if i > 0 and (i + 1) % 4 == 0:
-                sys.stdout.write(" ")
+                str = str + " "
             if i > 0 and (i + 1) % 8 == 0:
-                print ""
-        print "--------- Hex Payload End -----------"
+                str = str + "\n"
+        str = str + "--------- Hex Payload End -----------\n"
+        return str
 
     def asciiPrint(self):
-        print "-------- Ascii Payload Start ----------"
-        print self.payload.raw
+        str = ''
+        str = str + "-------- Ascii Payload Start ----------\n"
         for i in range(0,len(self.payload)):
             c = self.payload.raw[i]
             if c in string.printable:
-                sys.stdout.write(c)
+                str = str + c
             else:
-                sys.stdout.write("\\x" + hexlify(c))
-        print "\n--------- Ascii Payload End -----------"
+                str = str + "\\x" + hexlify(c)
+        str = str + "\n--------- Ascii Payload End -----------\n"
             
     def PrintOffsets(self):
         print " Start        End"        
@@ -128,5 +130,20 @@ class PayloadGenerator:
             return
         for c in self.itered:
             print "%05s  %10s" % (str(c.ini), str(c.end))
+
+    def __str__(self):
+        if self.payload == None:
+            print "No payload to print"
+            return ""
+
+        printable = 1
+        for i in range(0,len(self.payload)):
+            if not self.payload[i] in string.printable:
+                printable = 0
+        if printable:
+            return self.asciiPrint()
+        else:
+           return self.hexPrint()
+            
 # We should deal with the http modifiers (skiping by now)
 #
