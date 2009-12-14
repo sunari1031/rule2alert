@@ -166,11 +166,13 @@ class HTTPHeader:
 		self.keep_alive = "300"
 		self.connection = "keep-alive"
 		
-	def build(self):
+	def build(self, src_ip. src_port, dst_ip, dst_port, seq_num, ack_num):
 		#Build the HTTP header
-		http_header = "%s %s %s\r\n%s\r\n%s\r\n%s\r\n%s\r\n%s\r\n%s\r\n%s\r\n%\r\n\r\n" % (self.method, self.uri, self.version, self.host, self.user_agent, self.accept, self.accept_language, self.accept_encoding, self.accept_charset, self.keep_alive, self.connection)
+		payload = "%s %s %s\r\n%s\r\n%s\r\n%s\r\n%s\r\n%s\r\n%s\r\n%s\r\n%s\r\n\r\n" % (self.method, self.uri, self.version, self.host, self.user_agent, self.accept, self.accept_language, self.accept_encoding, self.accept_charset, self.keep_alive, self.connection)
 
-		return http_header
+		http_packet = Ether()/IP(src=src_ip, dst=dst_ip)/TCP(flags="PA", sport=src_port, dport=dst_port, seq=seq_num, ack=ack_num)/payload
+
+		return http_packet
 
 	def build_uri(self, content):
 		uri_content = ""
@@ -180,3 +182,4 @@ class HTTPHeader:
 
 		#At the end, we add on the new uri_content to the header uri
 		#self.uri += uri_content
+
