@@ -150,8 +150,7 @@ class PayloadGenerator:
 #
 class HTTPHeader:
 
-	def __init__(self, rule_contents):
-		self.contents = rule_contents
+	def __init__(self):
 		#We need to set defaults for HTTP headers
 		#These can be changed depending on the rule
 		self.method  	= ""
@@ -166,20 +165,10 @@ class HTTPHeader:
 		self.keep_alive = "300"
 		self.connection = "keep-alive"
 		
-	def build(self, src_ip. src_port, dst_ip, dst_port, seq_num, ack_num):
+	def build(self, src_ip, src_port, dst_ip, dst_port, seq_num, ack_num, data):
 		#Build the HTTP header
-		payload = "%s %s %s\r\n%s\r\n%s\r\n%s\r\n%s\r\n%s\r\n%s\r\n%s\r\n%s\r\n\r\n" % (self.method, self.uri, self.version, self.host, self.user_agent, self.accept, self.accept_language, self.accept_encoding, self.accept_charset, self.keep_alive, self.connection)
+		payload = "%s %s %s\r\n%s\r\n%s\r\n%s\r\n%s\r\n%s\r\n%s\r\n%s\r\n%s\r\n\r\n%s" % (self.method, self.uri, self.version, self.host, self.user_agent, self.accept, self.accept_language, self.accept_encoding, self.accept_charset, self.keep_alive, self.connection, data)
 
 		http_packet = Ether()/IP(src=src_ip, dst=dst_ip)/TCP(flags="PA", sport=src_port, dport=dst_port, seq=seq_num, ack=ack_num)/payload
 
 		return http_packet
-
-	def build_uri(self, content):
-		uri_content = ""
-		#Here we need to go through the content passed in
-		#The content will have modifiers so we need to determine
-		#how many bytes are before it, and after it
-
-		#At the end, we add on the new uri_content to the header uri
-		#self.uri += uri_content
-
