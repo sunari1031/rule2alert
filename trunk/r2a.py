@@ -1,6 +1,7 @@
 #!/usr/bin/python
 from Parser.RuleParser import *
 from Generator.Payload import *
+from Packet.PacketGenerator import *
 from scapy.all import *
 from optparse import OptionParser
 import os,sys
@@ -17,18 +18,8 @@ class r2a:
         self.snort_vars = self.parseConf(self.options.snort_conf)
         #Snort rules
         self.rules = self.loadRules(self.options.rule_file)
-        #IP Source Address
-        self.source = ""
-        #Source Port
-        self.sport = ""
-        #IP Destination Address
-        self.dest = ""
-        #Destination Port
-        self.dport = ""
-        #Transport Layer Protocol
-        self.proto = ""
-        #Set generic IP layer
-        self.flow = IP()
+		#Packet generator
+        self.PacketGen = PacketGenerator()
 
     def main(self):
         #Regexp for avoid comments and empty lines
@@ -45,22 +36,23 @@ class r2a:
             if not comments and not emptylines:
                 try:
                     r = Rule(snort_rule)
-                    self.source = self.snort_vars[r.rawsources[1:]]
-                    self.dest   = self.snort_vars[r.rawdestinations[1:]]
-                    self.proto  = r.proto
-        
+                    self.PacketGen.src = self.snort_vars[r.rawsources[1:]]
+                    self.PacketGen.dst = self.snort_vars[r.rawdestinations[1:]]
+                    self.PacketGen.proto  = r.proto
+
                     #Set the transport layer based on the protocol
-                    if self.proto == "tcp":
-                        self.proto = TCP()
-                    elif self.proto == "udp":
-                        self.proto = UDP()
+                    if self.PacketGen.proto == "tcp":
+                        self.PacketGen.proto = TCP()
+                    elif self.PacketGen.proto == "udp":
+                        self.PacketGen.proto = UDP()
         
                     #Sets flow options based on snort alert
                     self.parseComm(r.rawsrcports, r.rawdesports)
+
+                    packets = self.PacketGen.build()
                     
-                    handshake = self.handshake()
-        
-                    print "%s:%s -> %s:%s" % (self.source, self.sport, self.dest, self.dport)
+                    for p in packets:
+                        print p.summary()
         
                     ContentGen = PayloadGenerator(r.contents)
         
@@ -74,66 +66,44 @@ class r2a:
                     continue
         print "Loaded "+str(rules_loaded)+" rules succesfully!"
 
-    #Make TCP Handshake based off snort rule direction and src/dst attributes
-    def handshake(self):
-        #Client ISN
-        client_isn = 1932
-        #Server ISN
-        server_isn = 1059
-
-        #Create the SYN Packet sent from the client to the server
-        syn = Ether()/IP(src=self.flow.src, dst=self.flow.dst)/TCP(flags="S", sport=self.proto.sport, dport=self.proto.dport, seq=client_isn)
-
-        #Create the SYN/ACK Packet returned from the server
-        syn_ack = Ether()/IP(src=self.flow.dst, dst=self.flow.src)/TCP(flags="SA", sport=self.proto.dport, dport=self.proto.sport, seq=server_isn, ack=syn.seq+1)
-        
-        #Create the ACK returned from the client
-        ack = Ether()/IP(src=self.flow.src, dst=self.flow.dst)/TCP(flags="A", sport=self.proto.sport, dport=self.proto.dport, seq=syn.seq+1, ack=syn_ack.seq+1)
-
-        handshake = [syn, syn_ack, ack]
-        for p in handshake:
-            print p.summary()
-
-        return handshake
-    
     #Parses the snort rule configuration to generate a flow
     #Which is later used in the packet generation
     def parseComm(self, sports, dports):
         #If the source is using CIDR notiation
         #Just pick the first IP in the subnet
-        if self.source.find("/") != -1:
-            self.source = self.source.split("/")[0]
-            self.source = "%s.%s" % (self.source[:self.source.rfind(".")],"1")
+        if self.PacketGen.src.find("/") != -1:
+            self.PacketGen.src = self.PacketGen.src.split("/")[0]
+            self.PacketGen.src = "%s.%s" % (self.PacketGen.src[:self.PacketGen.src.rfind(".")],"1")
         #Same for the dst
-        if self.dest.find("/") != -1:
-            self.dest = self.dest.split("/")[0]
-            self.dest = "%s.%s" % (self.dest[:self.dest.rfind(".")],"1")
+        if self.PacketGen.dst.find("/") != -1:
+            self.PacketGen.dst = self.PacketGen.dst.split("/")[0]
+            self.PacketGen.dst = "%s.%s" % (self.PacketGen.dst[:self.PacketGen.dst.rfind(".")],"1")
         #If any on either src or dst just use any IP
-        if self.source == "any":
-            self.source = "1.1.1.1"
-        if self.dest == "any":
-            self.dest = "1.1.1.1"
+        if self.PacketGen.src == "any":
+            self.PacketGen.src = "1.1.1.1"
+        if self.PacketGen.dst == "any":
+            self.PacketGen.dst = "1.1.1.1"
 
-        self.flow.src = self.source
-        self.flow.dst = self.dest
+        self.PacketGen.flow.src = self.PacketGen.src
+        self.PacketGen.flow.dst = self.PacketGen.dst
 
         #Do the same type of thing for ports
         if sports[1:] in self.snort_vars:
-            self.sport = self.snort_vars[sports[1:]]
+            self.PacketGen.sport = self.snort_vars[sports[1:]]
         elif sports == "any":
-            self.sport = "9001"
+            self.PacketGen.sport = "9001"
         else:
-            self.sport = sports
+            self.PacketGen.sport = sports
 
         if dports[1:] in self.snort_vars:
-            self.dport = self.snort_vars[dports[1:]]
-	elif dports == "any":
-		self.dport = "9001"
+            self.PacketGen.dport = self.snort_vars[dports[1:]]
+        elif dports == "any":
+			self.PacketGen.dport = "9001"
         else:
-            self.dport = dports
+            self.PacketGen.dport = dports
 
-        self.proto.sport = int(self.sport)
-        self.proto.dport = int(self.dport)
+        self.PacketGen.proto.sport = int(self.PacketGen.sport)
+        self.PacketGen.proto.dport = int(self.PacketGen.dport)
 
         
     #Reads in the rule file specified by the user
@@ -169,9 +139,6 @@ class r2a:
 
         return snort_vars
                 
-                
-
-    
 #Parses arguments that are passed in through the cli
 def parseArgs():
     usage = "usage: ./r2a.py -f rule_file -c snort_config -w pcap"
