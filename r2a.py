@@ -41,16 +41,10 @@ class r2a:
 					self.ContentGen.dst = self.snort_vars[r.rawdestinations[1:]]
 					self.ContentGen.proto  = r.proto
 
-					#Set the transport layer based on the protocol
-					if self.ContentGen.proto == "tcp":
-						self.ContentGen.proto = TCP()
-					elif self.ContentGen.proto == "udp":
-						self.ContentGen.proto = UDP()
-		
-					#Sets flow options based on snort alert
-					self.parseComm(r.rawsrcports, r.rawdesports)
+					self.ContentGen.parseComm(r.rawsrcports, r.rawdesports, self.snort_vars)
 
 					#packets = self.ContentGen.build()
+
 					self.ContentGen.build_handshake()
 					
 					for p in self.ContentGen.packets:
