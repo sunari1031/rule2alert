@@ -135,7 +135,47 @@ class PayloadGenerator:
 
 		return seq,ack
 
+	def parseComm(self, sports, dports, snort_vars):
+		if self.proto == "tcp":
+			self.proto = TCP()
+		elif self.proto == "udp":
+			self.proto = UDP()
+		#If the source is using CIDR notiation
+		#Just pick the first IP in the subnet
+		if self.src.find("/") != -1:
+			self.src = self.src.split("/")[0]
+			self.src = "%s.%s" % (self.src[:self.src.rfind(".")],"1")
+		#Same for the dst
+		if self.dst.find("/") != -1:
+			self.dst = self.dst.split("/")[0]
+			self.dst = "%s.%s" % (self.dst[:self.dst.rfind(".")],"1")
+		#If any on either src or dst just use any IP
+		if self.src == "any":
+			self.src = "1.1.1.1"
+		if self.dst == "any":
+			self.dst = "1.1.1.1"
 
+		self.flow.src = self.src
+		self.flow.dst = self.dst
+
+		#Do the same type of thing for ports
+		if sports[1:] in snort_vars:
+			self.sport = snort_vars[sports[1:]]
+		elif sports == "any":
+			self.sport = "9001"
+		else:
+			self.sport = sports
+
+		if dports[1:] in snort_vars:
+			self.dport = snort_vars[dports[1:]]
+		elif dports == "any":
+			self.dport = "9001"
+		else:
+			self.dport = dports
+
+		self.proto.sport = int(self.sport)
+		self.proto.dport = int(self.dport)
+		
 	def write_packets(self, pcap):
 		wrpcap(self.packets, pcap)
 
