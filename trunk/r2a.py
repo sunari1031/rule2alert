@@ -1,5 +1,6 @@
 #!/usr/bin/python
 from Parser.RuleParser import *
+from Parser.SnortConf import *
 from Generator.Payload import *
 from optparse import OptionParser
 import os,sys
@@ -13,11 +14,10 @@ class r2a:
 		#Command line options
 		self.options = options
 		#Snort conf variables
-		self.snort_vars = self.parseConf(self.options.snort_conf)
+		self.snort_vars = SnortConf(self.options.snort_conf).parse()
 		#Snort rules
 		self.rules = self.loadRules(self.options.rule_file)
 		#Packet generator
-		#self.ContentGen = ContentGenerator()
 		self.ContentGen = ""
 
 	def main(self):
@@ -42,7 +42,6 @@ class r2a:
 					self.ContentGen.proto  = r.proto
 
 					self.ContentGen.parseComm(r.rawsrcports, r.rawdesports, self.snort_vars)
-
 					#packets = self.ContentGen.build()
 
 					self.ContentGen.build_handshake()
@@ -62,46 +61,6 @@ class r2a:
 					continue
 		print "Loaded "+str(rules_loaded)+" rules succesfully!"
 
-	#Parses the snort rule configuration to generate a flow
-	#Which is later used in the packet generation
-	def parseComm(self, sports, dports):
-		#If the source is using CIDR notiation
-		#Just pick the first IP in the subnet
-		if self.ContentGen.src.find("/") != -1:
-			self.ContentGen.src = self.ContentGen.src.split("/")[0]
-			self.ContentGen.src = "%s.%s" % (self.ContentGen.src[:self.ContentGen.src.rfind(".")],"1")
-		#Same for the dst
-		if self.ContentGen.dst.find("/") != -1:
-			self.ContentGen.dst = self.ContentGen.dst.split("/")[0]
-			self.ContentGen.dst = "%s.%s" % (self.ContentGen.dst[:self.ContentGen.dst.rfind(".")],"1")
-		#If any on either src or dst just use any IP
-		if self.ContentGen.src == "any":
-			self.ContentGen.src = "1.1.1.1"
-		if self.ContentGen.dst == "any":
-			self.ContentGen.dst = "1.1.1.1"
-
-		self.ContentGen.flow.src = self.ContentGen.src
-		self.ContentGen.flow.dst = self.ContentGen.dst
-
-		#Do the same type of thing for ports
-		if sports[1:] in self.snort_vars:
-			self.ContentGen.sport = self.snort_vars[sports[1:]]
-		elif sports == "any":
-			self.ContentGen.sport = "9001"
-		else:
-			self.ContentGen.sport = sports
-
-		if dports[1:] in self.snort_vars:
-			self.ContentGen.dport = self.snort_vars[dports[1:]]
-		elif dports == "any":
-			self.ContentGen.dport = "9001"
-		else:
-			self.ContentGen.dport = dports
-
-		self.ContentGen.proto.sport = int(self.ContentGen.sport)
-		self.ContentGen.proto.dport = int(self.ContentGen.dport)
-
-		
 	#Reads in the rule file specified by the user
 	def loadRules(self, rule_file):
 		f = open(rule_file, 'r')
@@ -110,31 +69,6 @@ class r2a:
 
 		return rules
 
-	#Parses the snort configuration for all variables
-	#This is mostly used to grab variables such as
-	#$HOME_NET and $EXTERNAL_NET
-	def parseConf(self, snort_conf):
-		f = open(snort_conf, 'r')
-		conf = f.read().splitlines()
-		f.close()
-
-		snort_vars = {}
-
-		for line in conf:
-			if line.startswith("var"):
-				var, data = line[4:].split(" ")
-				if data[1:] in snort_vars:
-					data = snort_vars[data[1:]]
-				snort_vars[var] = data
-			elif line.startswith("portvar"):
-				var, data = line[8:].split(" ")
-				if data[1:] in snort_vars:
-					data = snort_vars[data[1:]]
-				snort_vars[var] = data
-				
-
-		return snort_vars
-				
 #Parses arguments that are passed in through the cli
 def parseArgs():
 	usage = "usage: ./r2a.py -f rule_file -c snort_config -w pcap"
