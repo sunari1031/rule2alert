@@ -223,30 +223,3 @@ class PayloadGenerator:
 			return self.asciiPrint()
 		else:
 		   return self.hexPrint()
-			
-# We should deal with the http modifiers (skiping by now)
-#
-class HTTPHeader:
-
-	def __init__(self):
-		#We need to set defaults for HTTP headers
-		#These can be changed depending on the rule
-		self.method  	= ""
-		self.uri	 	= "/"
-		self.version	= "HTTP/1.1"
-		self.host	   = "www.malforge.com"
-		self.user_agent = "Mozilla/5.0 (Windows; U; Windows NT 6.1; en-US; rv:1.9.1.5) Gecko/20091102 Firefox/3.5.5 (.NET CLR 3.5.30729)"
-		self.accept		= ""
-		self.accept_language = "en-us,en;q=0.5"
-		self.accept_encoding = "gzip,deflate"
-		self.accept_charset  = "ISO-8859-1,utf-8;q=0.7,*;q=0.7"
-		self.keep_alive = "300"
-		self.connection = "keep-alive"
-		
-	def build(self, src_ip, src_port, dst_ip, dst_port, seq_num, ack_num, data):
-		#Build the HTTP header
-		payload = "%s %s %s\r\n%s\r\n%s\r\n%s\r\n%s\r\n%s\r\n%s\r\n%s\r\n%s\r\n\r\n%s" % (self.method, self.uri, self.version, self.host, self.user_agent, self.accept, self.accept_language, self.accept_encoding, self.accept_charset, self.keep_alive, self.connection, data)
-
-		http_packet = Ether()/IP(src=src_ip, dst=dst_ip)/TCP(flags="PA", sport=src_port, dport=dst_port, seq=seq_num, ack=ack_num)/payload
-
-		return http_packet
