@@ -42,18 +42,17 @@ class r2a:
 					self.ContentGen.proto  = r.proto
 
 					self.ContentGen.parseComm(r.rawsrcports, r.rawdesports, self.snort_vars)
-					#packets = self.ContentGen.build()
 
 					self.ContentGen.build_handshake()
 					
 					for p in self.ContentGen.packets:
 						print p.summary()
 		
-					#ContentGen = PayloadGenerator(r.contents)
 		
-					#payload = ContentGen.build()
-		
-					#print ContentGen
+					self.ContentGen.build()
+
+					print self.ContentGen.asciiPrint()
+
 					rules_loaded = rules_loaded + 1
 				except:
 					traceback.print_exc()
