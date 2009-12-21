@@ -2,6 +2,7 @@
 from Parser.RuleParser import *
 from Parser.SnortConf import *
 from Generator.Payload import *
+from Generator.TestSnort import *
 from optparse import OptionParser
 import os,sys
 import re
@@ -44,17 +45,21 @@ class r2a:
 					self.ContentGen.parseComm(r.rawsrcports, r.rawdesports, self.snort_vars)
 
 					self.ContentGen.build_handshake()
+
+					self.ContentGen.build()
+					print self.ContentGen.hexPrint()
 					
 					for p in self.ContentGen.packets:
 						print p.summary()
 		
-		
-					self.ContentGen.build()
-
-					#print self.ContentGen.asciiPrint()
-					print self.ContentGen.hexPrint()
 
 					rules_loaded = rules_loaded + 1
+
+					self.ContentGen.write_packets("test.pcap")
+
+					t = TestSnort(self.options.snort_conf, "test.pcap")
+					t.run()
+
 				except:
 					traceback.print_exc()
 					print "Parser failed with rule: " + snort_rule
