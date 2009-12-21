@@ -160,6 +160,8 @@ class PayloadGenerator:
 			self.sport = snort_vars[sports[1:]]
 		elif sports == "any":
 			self.sport = "9001"
+		elif sports.find(":") != -1:
+			self.sport = sports.split(":")[0]
 		else:
 			self.sport = sports
 
@@ -167,6 +169,8 @@ class PayloadGenerator:
 			self.dport = snort_vars[dports[1:]]
 		elif dports == "any":
 			self.dport = "9001"
+		elif dports.find(":") != -1:
+			self.dport = dports.split(":")[0]
 		else:
 			self.dport = dports
 
