@@ -188,7 +188,7 @@ class PayloadGenerator:
 				str = str + " "
 			if i > 0 and (i + 1) % 8 == 0:
 				str = str + "\n"
-		str = str + "--------- Hex Payload End -----------\n"
+		str = str + "\n--------- Hex Payload End -----------\n"
 		return str
 
 	def asciiPrint(self):
