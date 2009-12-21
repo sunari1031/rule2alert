@@ -17,7 +17,9 @@ class TestSnort:
     def __init__(self, snort_conf, pcap, logfile):
         self.logfile = logfile
         self.alerts = []
-        self.cmd    = "snort -c %s -K none -q -A console -r %s" % (snort_conf, pcap)
+        self.snort_conf = snort_conf
+        self.pcap = pcap
+        self.cmd    = "snort -c %s -K none -q -A fast -r %s -l /var/log/r2a/" % (snort_conf, pcap)
 
     def run(self):
         p = Popen(self.cmd, shell=True, stdout=PIPE, stderr=PIPE)
@@ -49,7 +51,7 @@ class TestSnort:
             print alert
 
 '''
-t = TestSnort("asdf","asdf","/var/log/snort/alert.1")
+t = TestSnort("asdf","asdf","alert")
 t.readSnortAlerts()
 t.printAlerts()
 '''
