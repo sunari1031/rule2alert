@@ -84,36 +84,13 @@ class PayloadGenerator:
 
 		# write payloads
 		for c in itered:
-			if not c.negated:
-				fmt = str(c.end - c.ini) + "s"
-				flag=0
-				tmp = ""
-				i = 0
-				#while i < len(c.content):
-				#	if c.content[i]=="|" and (i>0 and c.content[i-1]!='\\' or i==0) and flag == 0:
-				#		flag = 1
-				#		i = i + 1
-				#		continue
+			fmt = str(c.end - c.ini) + "s"
+			flag=0
+			tmp = ""
+			i = 0
+			tmp = c.payload
 
-				#	if c.content[i]=="|" and i>0 and c.content[i-1]!='\\' and flag == 1:
-				#		flag = 0
-				#		i = i + 1
-				#		continue
-
-				#	if c.content[i]==" " and flag == 1:
-				#		i = i + 1
-				#		continue
-
-				#	if flag == 1:
-				#		tmp = tmp + a2b_hex(c.content[i:i+2])
-				#		i = i + 1
-				#	else:
-				#		tmp = tmp + c.content[i]
-				#		
-				#	i = i + 1
-				tmp = c.payload
-
-				struct.pack_into(fmt, self.payload, c.ini, tmp)
+			struct.pack_into(fmt, self.payload, c.ini, tmp)
 
 		self.itered = itered
 
@@ -132,6 +109,7 @@ class PayloadGenerator:
 
 		elif self.proto == "udp":
 			p = Ether()/IP(src=self.flow.src, dst=self.flow.dst)/UDP(sport=self.protocol.sport, dport=self.protocol.dport)/payload
+		    rst = Ether()/IP(src=self.flow.src, dst=self.flow.dst)/TCP(flags="R", sport=self.protocol.sport, dport=self.protocol.dport, seq=client_isn)
 
 		self.packets.append(p)
 
