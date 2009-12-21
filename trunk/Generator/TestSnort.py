@@ -10,5 +10,8 @@ class TestSnort:
 		p = Popen(self.cmd, shell=True, stdout=PIPE, stderr=PIPE)
 		stdout, stderr = p.communicate()
 
-		for a in stdout.splitlines():
-			print a
+		if stdout:
+			return len(stdout)
+
+		else:
+			return 0

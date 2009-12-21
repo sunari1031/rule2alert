@@ -1,4 +1,5 @@
 #!/usr/bin/python
+from scapy.all import *
 from Parser.RuleParser import *
 from Parser.SnortConf import *
 from Generator.Payload import *
@@ -20,6 +21,10 @@ class r2a:
 		self.rules = self.loadRules(self.options.rule_file)
 		#Packet generator
 		self.ContentGen = ""
+		#List of packets built from rules
+		self.packets = []
+		#Number of alerts from snort test cases
+		self.alerts = ""
 
 	def main(self):
 		#Regexp for avoid comments and empty lines
@@ -47,24 +52,30 @@ class r2a:
 					self.ContentGen.build_handshake()
 
 					self.ContentGen.build()
-					print self.ContentGen.hexPrint()
+					#print self.ContentGen.hexPrint()
 					
 					for p in self.ContentGen.packets:
-						print p.summary()
+						#print p.summary()
+						self.packets.append(p)
 		
 
 					rules_loaded = rules_loaded + 1
 
-					self.ContentGen.write_packets("test.pcap")
+					#self.ContentGen.write_packets("test.pcap")
 
-					t = TestSnort(self.options.snort_conf, "test.pcap")
-					t.run()
+					#t = TestSnort(self.options.snort_conf, "test.pcap")
+					#num = t.run()
+
+					#self.alerts += num
 
 				except:
 					traceback.print_exc()
-					print "Parser failed with rule: " + snort_rule
+					#print "Parser failed with rule: " + snort_rule
+					print "Parser failed - skipping rule"
 					continue
 		print "Loaded "+str(rules_loaded)+" rules succesfully!"
+		
+		self.write_packets()
 
 	#Reads in the rule file specified by the user
 	def loadRules(self, rule_file):
@@ -73,6 +84,9 @@ class r2a:
 		f.close()
 
 		return rules
+
+	def write_packets(self):
+		wrpcap(self.options.pcap, self.packets)
 
 #Parses arguments that are passed in through the cli
 def parseArgs():
