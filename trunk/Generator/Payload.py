@@ -22,6 +22,7 @@ class PayloadGenerator:
 		self.sport	 = ""
 		self.dport	 = ""
 		self.proto	 = ""
+		self.protocol = ""
 		self.flow	  = IP()
 		self.handshake = False
 		self.packets   = []
@@ -32,10 +33,12 @@ class PayloadGenerator:
 		for c in self.contents:
 			if not oldc:
 				c.ini = 0
-				c.end = len(c.content)
+				#c.end = len(c.content)
+				c.end = len(c.payload)
 			else:
 				c.ini = oldc.end + 1
-				c.end = c.ini + len(c.content)
+				#c.end = c.ini + len(c.content)
+				c.end = c.ini + len(c.payload)
 
 			if c.offset and not oldc:
 				c.ini = c.ini + c.offset
@@ -45,12 +48,14 @@ class PayloadGenerator:
 				# Here we should check for conflicts
 				if c.ini < c.offset:
 					c.ini = c.offset
-					c.end = c.ini + len(c.content)
+					#c.end = c.ini + len(c.content)
+					c.end = c.ini + len(c.payload)
 
 			if c.distance and oldc:
 				if oldc.end + c.distance > c.ini:
 					c.ini = oldc.end + c.distance
-					c.end = oldc.end + c.distance + len(c.content)
+					#c.end = oldc.end + c.distance + len(c.content)
+					c.end = oldc.end + c.distance + len(c.payload)
 
 			# Checks
 			if c.depth and c.end > c.depth:
@@ -84,43 +89,62 @@ class PayloadGenerator:
 				flag=0
 				tmp = ""
 				i = 0
-				while i < len(c.content):
-					if c.content[i]=="|" and (i>0 and c.content[i-1]!='\\' or i==0) and flag == 0:
-						flag = 1
-						i = i + 1
-						continue
+				#while i < len(c.content):
+				#	if c.content[i]=="|" and (i>0 and c.content[i-1]!='\\' or i==0) and flag == 0:
+				#		flag = 1
+				#		i = i + 1
+				#		continue
 
-					if c.content[i]=="|" and i>0 and c.content[i-1]!='\\' and flag == 1:
-						flag = 0
-						i = i + 1
-						continue
+				#	if c.content[i]=="|" and i>0 and c.content[i-1]!='\\' and flag == 1:
+				#		flag = 0
+				#		i = i + 1
+				#		continue
 
-					if c.content[i]==" " and flag == 1:
-						i = i + 1
-						continue
+				#	if c.content[i]==" " and flag == 1:
+				#		i = i + 1
+				#		continue
 
-					if flag == 1:
-						tmp = tmp + a2b_hex(c.content[i:i+2])
-						i = i + 1
-					else:
-						tmp = tmp + c.content[i]
-						
-					i = i + 1
+				#	if flag == 1:
+				#		tmp = tmp + a2b_hex(c.content[i:i+2])
+				#		i = i + 1
+				#	else:
+				#		tmp = tmp + c.content[i]
+				#		
+				#	i = i + 1
+				tmp = c.payload
 
 				struct.pack_into(fmt, self.payload, c.ini, tmp)
 
 		self.itered = itered
+
+		self.build_packet(self.payload.raw)
+
 		return self.payload
+
+	def build_packet(self, payload):
+		if self.proto == "tcp":
+			seq_num, ack_num = self.get_seqack()
+			if seq_num is None:
+				seq_num = 9001
+				ack_num = 9002
+				
+			p = Ether()/IP(src=self.flow.src, dst=self.flow.dst)/TCP(flags="PA", sport=self.protocol.sport, dport=self.protocol.dport, seq=seq_num, ack=ack_num)/payload
+
+		elif self.proto == "udp":
+			p = Ether()/IP(src=self.flow.src, dst=self.flow.dst)/UDP(sport=self.protocol.sport, dport=self.protocol.dport)/payload
+
+		self.packets.append(p)
+
 
 	def build_handshake(self):
 		client_isn = 1932
 		server_isn = 1059
 
-		syn = Ether()/IP(src=self.flow.src, dst=self.flow.dst)/TCP(flags="S", sport=self.proto.sport, dport=self.proto.dport, seq=client_isn)
+		syn = Ether()/IP(src=self.flow.src, dst=self.flow.dst)/TCP(flags="S", sport=self.protocol.sport, dport=self.protocol.dport, seq=client_isn)
 
-		synack = Ether()/IP(src=self.flow.dst, dst=self.flow.src)/TCP(flags="SA", sport=self.proto.dport, dport=self.proto.sport, seq=server_isn, ack=syn.seq+1)
+		synack = Ether()/IP(src=self.flow.dst, dst=self.flow.src)/TCP(flags="SA", sport=self.protocol.dport, dport=self.protocol.sport, seq=server_isn, ack=syn.seq+1)
 
-		ack = Ether()/IP(src=self.flow.src, dst=self.flow.dst)/TCP(flags="A", sport=self.proto.sport, dport=self.proto.dport, seq=syn.seq+1, ack=synack.seq+1)
+		ack = Ether()/IP(src=self.flow.src, dst=self.flow.dst)/TCP(flags="A", sport=self.protocol.sport, dport=self.protocol.dport, seq=syn.seq+1, ack=synack.seq+1)
 	
 		self.packets.append(syn)
 		self.packets.append(synack)
@@ -128,7 +152,7 @@ class PayloadGenerator:
 
 	def get_seqack(self):
 		if len(self.packets) == 0:
-			return 0
+			return None,None
 
 		seq = self.packets[-1].seq
 		ack = self.packets[-1].ack
@@ -137,9 +161,9 @@ class PayloadGenerator:
 
 	def parseComm(self, sports, dports, snort_vars):
 		if self.proto == "tcp":
-			self.proto = TCP()
+			self.protocol = TCP()
 		elif self.proto == "udp":
-			self.proto = UDP()
+			self.protocol = UDP()
 		#If the source is using CIDR notiation
 		#Just pick the first IP in the subnet
 		if self.src.find("/") != -1:
@@ -173,11 +197,11 @@ class PayloadGenerator:
 		else:
 			self.dport = dports
 
-		self.proto.sport = int(self.sport)
-		self.proto.dport = int(self.dport)
+		self.protocol.sport = int(self.sport)
+		self.protocol.dport = int(self.dport)
 		
 	def write_packets(self, pcap):
-		wrpcap(self.packets, pcap)
+		wrpcap(pcap, self.packets)
 
 	def hexPrint(self):
 		str = ''
