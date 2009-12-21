@@ -24,7 +24,7 @@ class r2a:
 		#List of packets built from rules
 		self.packets = []
 		#Number of alerts from snort test cases
-		self.alerts = ""
+		self.alerts = 0
 
 	def main(self):
 		#Regexp for avoid comments and empty lines
@@ -55,7 +55,7 @@ class r2a:
 					#print self.ContentGen.hexPrint()
 					
 					for p in self.ContentGen.packets:
-						#print p.summary()
+						print p.summary()
 						self.packets.append(p)
 		
 
@@ -63,10 +63,10 @@ class r2a:
 
 					#self.ContentGen.write_packets("test.pcap")
 
-					#t = TestSnort(self.options.snort_conf, "test.pcap")
-					#num = t.run()
+					t = TestSnort(self.options.snort_conf, "test.pcap")
+					num = t.run()
 
-					#self.alerts += num
+					self.alerts += int(num)
 
 				except:
 					traceback.print_exc()
@@ -74,6 +74,8 @@ class r2a:
 					print "Parser failed - skipping rule"
 					continue
 		print "Loaded "+str(rules_loaded)+" rules succesfully!"
+
+		print "Alerted %s time(s)" % str(self.alerts)
 		
 		self.write_packets()
 

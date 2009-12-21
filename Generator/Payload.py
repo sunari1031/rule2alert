@@ -67,7 +67,7 @@ class PayloadGenerator:
 				
 			oldc = c
 			itered.append(c)
-			print "-> Ini: " + str(c.ini) + " End: " + str(c.end)
+			#print "-> Ini: " + str(c.ini) + " End: " + str(c.end)
 
 		# buffer size
 		max = 0
@@ -104,7 +104,7 @@ class PayloadGenerator:
 
 		elif self.proto == "udp":
 			p = Ether()/IP(src=self.flow.src, dst=self.flow.dst)/UDP(sport=self.protocol.sport, dport=self.protocol.dport)/payload
-		    rst = Ether()/IP(src=self.flow.src, dst=self.flow.dst)/TCP(flags="R", sport=self.protocol.sport, dport=self.protocol.dport, seq=client_isn)
+			rst = Ether()/IP(src=self.flow.src, dst=self.flow.dst)/TCP(flags="R", sport=self.protocol.sport, dport=self.protocol.dport)
 
 		self.packets.append(p)
 
