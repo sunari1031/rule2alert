@@ -85,12 +85,7 @@ class PayloadGenerator:
 		# write payloads
 		for c in itered:
 			fmt = str(c.end - c.ini) + "s"
-			flag=0
-			tmp = ""
-			i = 0
-			tmp = c.payload
-
-			struct.pack_into(fmt, self.payload, c.ini, tmp)
+			struct.pack_into(fmt, self.payload, c.ini, c.payload)
 
 		self.itered = itered
 
