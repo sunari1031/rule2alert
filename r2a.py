@@ -51,7 +51,8 @@ class r2a:
 		
 					self.ContentGen.build()
 
-					print self.ContentGen.asciiPrint()
+					#print self.ContentGen.asciiPrint()
+					print self.ContentGen.hexPrint()
 
 					rules_loaded = rules_loaded + 1
 				except:
