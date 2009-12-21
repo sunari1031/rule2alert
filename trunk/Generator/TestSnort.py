@@ -23,6 +23,8 @@ class TestSnort:
         p = Popen(self.cmd, shell=True, stdout=PIPE, stderr=PIPE)
         stdout, stderr = p.communicate()
 
+		stdout = stdout.splitlines()
+
         if stdout:
             return len(stdout)
 
