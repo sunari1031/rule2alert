@@ -27,6 +27,8 @@ class r2a:
 		self.alerts = 0
 		#Number of rules initially loaded
 		self.rules_loaded = 0
+		#Collection of SIDS loaded
+		self.sids = []
 
 	def main(self):
 		#Regexp for avoid comments and empty lines
@@ -42,6 +44,8 @@ class r2a:
 			if not comments and not emptylines:
 				try:
 					r = Rule(snort_rule)
+					self.sids.append(r.sid)
+
 					self.ContentGen = PayloadGenerator(r.contents)
 
 					self.ContentGen.src = self.snort_vars[r.rawsources[1:]]
@@ -57,7 +61,6 @@ class r2a:
 					for p in self.ContentGen.packets:
 						print p.summary()
 						self.packets.append(p)
-		
 
 					if self.options.hex:
 						print "\n" + self.ContentGen.hexPrint()
@@ -90,16 +93,8 @@ class r2a:
 		wrpcap(self.options.pcap, self.packets)
 
 	def test_snort(self):
-		t = TestSnort(self.options.snort_conf, self.options.pcap)
-		self.alerts = t.run()
-
-		t.printAlerts()
-
-		if self.alerts < self.rules_loaded:
-			missed = rules_loaded - self.alerts
-			print "Failed to alert on %d rules" % missed
-		elif self.alerts == self.rules_loaded:
-			print "Successfully alerted on all loaded rules"
+		t = TestSnort(self.options.snort_conf, self.options.pcap, self.sids)
+		t.run()
 
 #Parses arguments that are passed in through the cli
 def parseArgs():

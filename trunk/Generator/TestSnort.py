@@ -14,11 +14,13 @@ class SnortAlert:
 
 class TestSnort:
     
-    def __init__(self, snort_conf, pcap):
+    def __init__(self, snort_conf, pcap, loaded_sids):
         self.logfile = "/var/log/snort/r2a.log"
         self.alerts = []
+        self.alert_sids = []
         self.snort_conf = snort_conf
         self.pcap = pcap
+        self.loaded_sids = loaded_sids
         self.cmd    = "snort -c %s -K none -q -A console -r %s" % (self.snort_conf, self.pcap)
 
     def run(self):
@@ -32,14 +34,24 @@ class TestSnort:
             m = sig_reg.search(alert)
             if m:
                 try:
-                    self.alerts.append(SnortAlert(m.group("gid"),m.group("sid"),m.group("rev"),m.group("msg")))
-
+                    s = SnortAlert(m.group("gid"),m.group("sid"),m.group("rev"),m.group("msg"))
+                    self.alerts.append(s)
+                    self.alert_sids.append(s.sid)
                 except:
                     print "Error parsing alert: %s" % alert
 
         if self.alerts:
-            return len(self.alerts)
-        
+            if len(self.alerts) == len(self.loaded_sids):
+                print "Successfully alerted on all loaded rules"
+            elif len(self.alerts) < len(self.loaded_sids):
+                missed = len(self.loaded_sids) - len(self.alerts)
+                print "Failed to alert on %d rules" % missed
+                for sid in self.loaded_sids:
+                    if not sid in self.alert_sids:
+                        print "Failed on sid: %s" % str(sid)
+        elif not self.alerts and self.loaded_sids > 0:
+		    print "No alerts returned"
+            
     def readSnortAlerts(self):
         #12/21-16:14:50.971883  [**] [1:20000000:1] Snort alert [**] [Priority: 0] {TCP} 192.168.0.1:9001 -> 1.1.1.1:80
         #                            [gid:sid:rev]
