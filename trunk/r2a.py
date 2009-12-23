@@ -52,21 +52,16 @@ class r2a:
 					self.ContentGen.build_handshake()
 
 					self.ContentGen.build()
-					#print self.ContentGen.hexPrint()
-					
+
 					for p in self.ContentGen.packets:
 						print p.summary()
 						self.packets.append(p)
 		
 
+					if self.options.hex:
+						print "\n" + self.ContentGen.hexPrint()
+
 					rules_loaded = rules_loaded + 1
-
-					#self.ContentGen.write_packets("test.pcap")
-
-					t = TestSnort(self.options.snort_conf, "test.pcap")
-					num = t.run()
-
-					self.alerts += int(num)
 
 				except:
 					traceback.print_exc()
@@ -75,9 +70,17 @@ class r2a:
 					continue
 		print "Loaded "+str(rules_loaded)+" rules succesfully!"
 
-		print "Alerted %s time(s)" % str(self.alerts)
+		print "Writing packets to pcap..."
 		
 		self.write_packets()
+
+		if self.options.testSnort:
+			t = TestSnort(self.options.snort_conf, self.options.pcap)
+			self.alerts = t.run()
+
+			print "Snort alerted %s time(s)" % str(self.alerts)		
+	
+			t.printAlerts()
 
 	#Reads in the rule file specified by the user
 	def loadRules(self, rule_file):
@@ -98,6 +101,9 @@ def parseArgs():
 	parser.add_option("-f", help="Read in snort rule file", action="store", type="string", dest="rule_file")
 	parser.add_option("-c", help="Read in snort configuration file", action="store", type="string", dest="snort_conf")
 	parser.add_option("-w", help="Name of pcap file", action="store", type="string", dest="pcap")
+
+	parser.add_option("-v", help="Verbose hex output of raw alert", action="store_true", dest="hex")
+	parser.add_option("-t", help="Test rule against current snort configuration", action="store_true", dest="testSnort")
 
 	(options, args) = parser.parse_args(sys.argv)
 
