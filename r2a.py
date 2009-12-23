@@ -25,12 +25,13 @@ class r2a:
 		self.packets = []
 		#Number of alerts from snort test cases
 		self.alerts = 0
+		#Number of rules initially loaded
+		self.rules_loaded = 0
 
 	def main(self):
 		#Regexp for avoid comments and empty lines
 		pcomments = re.compile('^\s*#')
 		pemptylines = re.compile('^\s*$')
-		rules_loaded = 0
 		#Go through each snort rule
 		for snort_rule in self.rules:
 			snort_rule = snort_rule.strip()
@@ -61,26 +62,21 @@ class r2a:
 					if self.options.hex:
 						print "\n" + self.ContentGen.hexPrint()
 
-					rules_loaded = rules_loaded + 1
+					self.rules_loaded += 1
 
 				except:
 					traceback.print_exc()
 					#print "Parser failed with rule: " + snort_rule
 					print "Parser failed - skipping rule"
 					continue
-		print "Loaded "+str(rules_loaded)+" rules succesfully!"
+		print "Loaded %d rules succesfully!" % self.rules_loaded
 
 		print "Writing packets to pcap..."
 		
 		self.write_packets()
 
 		if self.options.testSnort:
-			t = TestSnort(self.options.snort_conf, self.options.pcap)
-			self.alerts = t.run()
-
-			print "Snort alerted %s time(s)" % str(self.alerts)		
-	
-			t.printAlerts()
+			self.test_snort()
 
 	#Reads in the rule file specified by the user
 	def loadRules(self, rule_file):
@@ -93,9 +89,21 @@ class r2a:
 	def write_packets(self):
 		wrpcap(self.options.pcap, self.packets)
 
+	def test_snort(self):
+		t = TestSnort(self.options.snort_conf, self.options.pcap)
+		self.alerts = t.run()
+
+		t.printAlerts()
+
+		if self.alerts < self.rules_loaded:
+			missed = rules_loaded - self.alerts
+			print "Failed to alert on %d rules" % missed
+		elif self.alerts == self.rules_loaded:
+			print "Successfully alerted on all loaded rules"
+
 #Parses arguments that are passed in through the cli
 def parseArgs():
-	usage = "usage: ./r2a.py -f rule_file -c snort_config -w pcap"
+	usage = "usage: ./r2a.py [-vt] -f rule_file -c snort_config -w pcap"
 	parser = OptionParser(usage)
 	
 	parser.add_option("-f", help="Read in snort rule file", action="store", type="string", dest="rule_file")
