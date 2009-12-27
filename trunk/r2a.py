@@ -98,7 +98,7 @@ class r2a:
 
 #Parses arguments that are passed in through the cli
 def parseArgs():
-	usage = "usage: ./r2a.py [-vt] -f rule_file -c snort_config -w pcap"
+	usage = "usage: python r2a.py [-vt] -f rule_file -c snort_config -w pcap"
 	parser = OptionParser(usage)
 	
 	parser.add_option("-f", help="Read in snort rule file", action="store", type="string", dest="rule_file")
@@ -107,6 +107,10 @@ def parseArgs():
 
 	parser.add_option("-v", help="Verbose hex output of raw alert", action="store_true", dest="hex")
 	parser.add_option("-t", help="Test rule against current snort configuration", action="store_true", dest="testSnort")
+
+	if len(sys.argv) == 1:
+		print usage
+		sys.exit(0)
 
 	(options, args) = parser.parse_args(sys.argv)
 
