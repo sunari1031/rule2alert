@@ -99,22 +99,23 @@ class PayloadGenerator:
 
 	def build_packet(self, payload):
 
-		source_ip   = None
-		source_port = None
-		dest_ip	 = None
-		dest_port   = None
+		source_ip   = self.ip.src
+		source_port = self.protocol.sport
+		dest_ip	    = self.ip.dst
+		dest_port   = self.protocol.dport
 
 		#Set flow
-		if self.flow.to_server or self.flow.from_client:
-			source_ip = self.ip.src
-			source_port = self.protocol.sport
-			dest_ip = self.ip.dst
-			dest_port = self.protocol.dport
-		elif self.flow.to_client or self.flow.from_server:
-			source_ip = self.ip.dst
-			source_port = self.protocol.dport
-			dest_ip = self.ip.src
-			dest_port = self.protocol.sport
+		if self.flow is not None:
+			if self.flow.to_server or self.flow.from_client:
+				source_ip = self.ip.src
+				source_port = self.protocol.sport
+				dest_ip = self.ip.dst
+				dest_port = self.protocol.dport
+			elif self.flow.to_client or self.flow.from_server:
+				source_ip = self.ip.dst
+				source_port = self.protocol.dport
+				dest_ip = self.ip.src
+				dest_port = self.protocol.sport
 
 		if self.proto == "tcp":
 			seq_num, ack_num = self.get_seqack()
