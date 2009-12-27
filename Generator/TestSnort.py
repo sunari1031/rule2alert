@@ -49,7 +49,6 @@ class TestSnort:
             print "Failed to alert on %d rules" % missed
             for sid in self.loaded_sids:
                 if not sid in self.alert_sids:
-                    print "Failed on sid: %s" % str(sid)
 					f.write(sid + "\n")
 				if sid in self.alert_sids:
 					f2.write(sid + "\n")
