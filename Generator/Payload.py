@@ -29,7 +29,7 @@ class PayloadGenerator:
 		self.packets   = []
 		
 	def build(self):
-		if self.flow.established:
+		if self.flow and self.flow.established:
 			self.build_handshake()
 
 		oldc = None
