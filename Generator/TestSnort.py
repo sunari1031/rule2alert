@@ -43,18 +43,18 @@ class TestSnort:
         if len(self.alerts) == len(self.loaded_sids):
             print "Successfully alerted on all loaded rules"
         elif len(self.alerts) < len(self.loaded_sids):
-			f = open("output/fail.log",'w')
-			f2 = open("output/success.log",'w')
+            f = open("output/fail.log",'w')
+            f2 = open("output/success.log",'w')
             missed = len(self.loaded_sids) - len(self.alerts)
             print "Failed to alert on %d rules" % missed
             for sid in self.loaded_sids:
                 if not sid in self.alert_sids:
-					f.write(sid + "\n")
-				if sid in self.alert_sids:
-					f2.write(sid + "\n")
-					
-			f.close()
-			f2.close()
+                    f.write(sid + "\n")
+                if sid in self.alert_sids:
+                    f2.write(sid + "\n")
+                    
+            f.close()
+            f2.close()
             
     def readSnortAlerts(self):
         #12/21-16:14:50.971883  [**] [1:20000000:1] Snort alert [**] [Priority: 0] {TCP} 192.168.0.1:9001 -> 1.1.1.1:80
