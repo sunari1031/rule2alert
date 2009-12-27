@@ -46,7 +46,7 @@ class r2a:
 					r = Rule(snort_rule)
 					self.sids.append(r.sid)
 
-					self.ContentGen = PayloadGenerator(r.contents)
+					self.ContentGen = PayloadGenerator(r.contents, r.flow)
 
 					self.ContentGen.src = self.snort_vars[r.rawsources[1:]]
 					self.ContentGen.dst = self.snort_vars[r.rawdestinations[1:]]
@@ -54,7 +54,7 @@ class r2a:
 
 					self.ContentGen.parseComm(r.rawsrcports, r.rawdesports, self.snort_vars)
 
-					self.ContentGen.build_handshake()
+					#self.ContentGen.build_handshake()
 
 					self.ContentGen.build()
 
