@@ -2,6 +2,7 @@ import struct
 from binascii import *
 from ctypes import create_string_buffer
 from scapy.all import *
+from Protocols.HTTP import *
 import sys
 import string
 
@@ -9,12 +10,14 @@ class PayloadGenerator:
 	pkts = []
 	payload = None
 	contents = []
+	uricontents = []
 	itered = []
 
 	#def __init__(self, rule_contents, flow):
 	def __init__(self, rule, snort_vars):
 		self.rule = rule
 		self.contents = self.rule.contents
+		self.uricontents = self.rule.uricontents
 		self.payload = None
 		self.flow = rule.flow
 		self.itered = []
@@ -39,7 +42,20 @@ class PayloadGenerator:
 
 		oldc = None
 		itered = []
+
 		for c in self.contents:
+			if c.isHTTP:
+				oldc = c
+				h = HTTP()
+				h.check(c.payload)
+				h.build()
+				c.payload = h.payload
+				c.ini = 0
+				c.end = len(c.payload)
+				itered.append(c)
+	
+				continue
+
 			if not oldc:
 				c.ini = 0
 				#c.end = len(c.content)
@@ -98,6 +114,7 @@ class PayloadGenerator:
 
 		self.itered = itered
 
+
 		self.build_packet(self.payload.raw)
 
 		return self.payload
@@ -134,6 +151,7 @@ class PayloadGenerator:
 
 		elif self.proto == "udp":
 			p = IP(src=source_ip, dst=dest_ip)/UDP(sport=source_port, dport=dest_port)/payload
+
 
 
 		self.packets.append(p)

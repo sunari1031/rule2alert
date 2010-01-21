@@ -43,8 +43,8 @@ class r2a:
 			#If it's not a comment or an empty line...
 			if not comments and not emptylines:
 				try:
-					print "Building Rule"
 					r = Rule(snort_rule)
+					print "Building Rule: %s" % str(r.sid)
 					self.ContentGen = PayloadGenerator(r, self.snort_vars)
 
 					self.ContentGen.build()
@@ -52,7 +52,7 @@ class r2a:
 					self.sids.append(r.sid)
 
 					for p in self.ContentGen.packets:
-						print p.summary()
+					#	print p.summary()
 						self.packets.append(p)
 
 					if self.options.hex:
@@ -69,7 +69,7 @@ class r2a:
 
 		print "Writing packets to pcap..."
 		
-		#self.write_packets()
+		self.write_packets()
 
 		if self.options.testSnort:
 			self.test_snort()
