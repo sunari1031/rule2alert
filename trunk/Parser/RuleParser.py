@@ -100,6 +100,7 @@ class RuleContent:
         self.http_method = None
         self.http_uri = None
         self.fast_pattern = None
+        self.isHTTP = False
 
     def __str__(self):
         r = "RuleContent:\n"
@@ -233,7 +234,7 @@ class Rule:
     flow=None
     msg=''
     sid =''
-    isHTTP = False
+    #isHTTP = False
 
     def __init__(self,rule):
         p = re.compile(r'^(?P<general>[^\(]+)\s*\((?P<rawoptions>.*)\)\s*$')
@@ -323,23 +324,23 @@ class Rule:
                     clast.within = int(v)
                     continue
                 if k == "http_client body":
-                    self.isHTTP = True
+                    clast.isHTTP = True
                     clast.http_client_body = v
                     continue
                 if k == "http_cookie":
-                    self.isHTTP = True
+                    clast.isHTTP = True
                     clast.http_cookie = v
                     continue
                 if k == "http_header":
-                    self.isHTTP = True
+                    clast.isHTTP = True
                     clast.http_header = v
                     continue
                 if k == "http_method":
-                    self.isHTTP = True
+                    clast.isHTTP = True
                     clast.http_method = v
                     continue
                 if k == "http_uri":
-                    self.isHTTP = True
+                    clast.isHTTP = True
                     clast.http_uri = v
                     continue
                 if k == "fast_pattern":
