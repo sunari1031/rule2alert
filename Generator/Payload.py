@@ -11,22 +11,27 @@ class PayloadGenerator:
 	contents = []
 	itered = []
 
-	def __init__(self, rule_contents, flow):
-		self.contents = rule_contents
+	#def __init__(self, rule_contents, flow):
+	def __init__(self, rule, snort_vars):
+		self.rule = rule
+		self.contents = self.rule.contents
 		self.payload = None
-		self.flow = flow
+		self.flow = rule.flow
 		self.itered = []
+		self.snort_vars = snort_vars
 
 		#These are for crafting packets
-		self.src	   = ""
-		self.dst	   = ""
+		self.src	   = self.snort_vars[self.rule.rawsources[1:]]
+		self.dst	   = self.snort_vars[self.rule.rawdestinations[1:]]
 		self.sport	   = ""
 		self.dport	   = ""
-		self.proto	   = ""
+		self.proto	   = self.rule.proto
 		self.protocol  = ""
 		self.ip  	   = IP()
 		self.handshake = False
 		self.packets   = []
+		self.parseComm(self.rule.rawsrcports, self.rule.rawdesports)
+		#self.build()
 		
 	def build(self):
 		if self.flow and self.flow.established:
@@ -123,12 +128,12 @@ class PayloadGenerator:
 				seq_num = 9001
 				ack_num = 9002
 
-			p = Ether()/IP(src=source_ip, dst=dest_ip)/TCP(flags="PA", sport=source_port, dport=dest_port, seq=seq_num, ack=ack_num)/payload
+			p = IP(src=source_ip, dst=dest_ip)/TCP(flags="PA", sport=source_port, dport=dest_port, seq=seq_num, ack=ack_num)/payload
 
-			rst = Ether()/IP(src=source_ip, dst=dest_ip)/TCP(flags="R", sport=source_port, dport=dest_port)
+			rst = IP(src=source_ip, dst=dest_ip)/TCP(flags="R", sport=source_port, dport=dest_port)
 
 		elif self.proto == "udp":
-			p = Ether()/IP(src=source_ip, dst=dest_ip)/UDP(sport=source_port, dport=dest_port)/payload
+			p = IP(src=source_ip, dst=dest_ip)/UDP(sport=source_port, dport=dest_port)/payload
 
 
 		self.packets.append(p)
@@ -138,11 +143,11 @@ class PayloadGenerator:
 		client_isn = 1932
 		server_isn = 1059
 
-		syn = Ether()/IP(src=self.ip.src, dst=self.ip.dst)/TCP(flags="S", sport=self.protocol.sport, dport=self.protocol.dport, seq=client_isn)
+		syn = IP(src=self.ip.src, dst=self.ip.dst)/TCP(flags="S", sport=self.protocol.sport, dport=self.protocol.dport, seq=client_isn)
 
-		synack = Ether()/IP(src=self.ip.dst, dst=self.ip.src)/TCP(flags="SA", sport=self.protocol.dport, dport=self.protocol.sport, seq=server_isn, ack=syn.seq+1)
+		synack = IP(src=self.ip.dst, dst=self.ip.src)/TCP(flags="SA", sport=self.protocol.dport, dport=self.protocol.sport, seq=server_isn, ack=syn.seq+1)
 
-		ack = Ether()/IP(src=self.ip.src, dst=self.ip.dst)/TCP(flags="A", sport=self.protocol.sport, dport=self.protocol.dport, seq=syn.seq+1, ack=synack.seq+1)
+		ack = IP(src=self.ip.src, dst=self.ip.dst)/TCP(flags="A", sport=self.protocol.sport, dport=self.protocol.dport, seq=syn.seq+1, ack=synack.seq+1)
 	
 		self.packets.append(syn)
 		self.packets.append(synack)
@@ -157,7 +162,7 @@ class PayloadGenerator:
 
 		return seq,ack
 
-	def parseComm(self, sports, dports, snort_vars):
+	def parseComm(self, sports, dports):
 		if self.proto == "tcp":
 			self.protocol = TCP()
 		elif self.proto == "udp":
@@ -181,8 +186,8 @@ class PayloadGenerator:
 		self.ip.dst = self.dst
 
 		#Do the same type of thing for ports
-		if sports[1:] in snort_vars:
-			self.sport = snort_vars[sports[1:]]
+		if sports[1:] in self.snort_vars:
+			self.sport = self.snort_vars[sports[1:]]
 		elif sports == "any":
 			self.sport = "9001"
 		elif sports.find(":") != -1:
@@ -190,8 +195,8 @@ class PayloadGenerator:
 		else:
 			self.sport = sports
 
-		if dports[1:] in snort_vars:
-			self.dport = snort_vars[dports[1:]]
+		if dports[1:] in self.snort_vars:
+			self.dport = self.snort_vars[dports[1:]]
 		elif dports == "any":
 			self.dport = "9001"
 		elif dports.find(":") != -1:
