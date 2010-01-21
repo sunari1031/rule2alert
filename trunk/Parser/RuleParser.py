@@ -233,6 +233,7 @@ class Rule:
     flow=None
     msg=''
     sid =''
+    isHTTP = False
 
     def __init__(self,rule):
         p = re.compile(r'^(?P<general>[^\(]+)\s*\((?P<rawoptions>.*)\)\s*$')
@@ -259,6 +260,7 @@ class Rule:
             self.contents = []
             self.uricontents = []
             self.flow = None
+            self.isHTTP = False
 
             for i in optlist:
                 pi = re.compile(r'^(?P<key>[^:]+)(\s*:\s*(?P<value>.*))?\s*$')
@@ -283,6 +285,7 @@ class Rule:
                     continue
 
                 if k == "uricontent":
+                    self.isHTTP = True
                     c = RuleUriContent(v)
                     self.uricontents.append(c)
                     continue
@@ -320,18 +323,23 @@ class Rule:
                     clast.within = int(v)
                     continue
                 if k == "http_client body":
+                    self.isHTTP = True
                     clast.http_client_body = v
                     continue
                 if k == "http_cookie":
+                    self.isHTTP = True
                     clast.http_cookie = v
                     continue
                 if k == "http_header":
+                    self.isHTTP = True
                     clast.http_header = v
                     continue
                 if k == "http_method":
+                    self.isHTTP = True
                     clast.http_method = v
                     continue
                 if k == "http_uri":
+                    self.isHTTP = True
                     clast.http_uri = v
                     continue
                 if k == "fast_pattern":
