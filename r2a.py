@@ -7,6 +7,7 @@ from Generator.TestSnort import *
 from optparse import OptionParser
 import os,sys
 import re
+from time import sleep
 
 class r2a:
 	#Initial function sets global variables used throughout the class
@@ -59,6 +60,8 @@ class r2a:
 						print "\n" + self.ContentGen.hexPrint()
 
 					self.rules_loaded += 1
+
+					sleep(0.0001)
 
 				except:
 					traceback.print_exc()

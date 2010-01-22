@@ -17,7 +17,7 @@ class HTTP:
 	
 
 	def check(self, payload):
-		m = re.search("(?P<key>[\w\-]+)(:|\|3a\|)(?P<value>[\w]+)", payload)
+		m = re.search("(?P<key>[\w\-]+)(:|\|3a\|)\s*(?P<value>[\w\s/\.;\-\:\(\)]+)", payload)
 		if m:
 			key = m.group("key")
 			value = m.group("value")
