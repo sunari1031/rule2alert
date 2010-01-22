@@ -24,8 +24,22 @@ class PayloadGenerator:
 		self.snort_vars = snort_vars
 
 		#These are for crafting packets
-		self.src	   = self.snort_vars[self.rule.rawsources[1:]]
-		self.dst	   = self.snort_vars[self.rule.rawdestinations[1:]]
+		self.src = ""
+		self.dst = ""
+		if self.rule.rawsources == "any":
+			self.src = "any"
+		elif self.rule.rawsources.find("/") != -1:
+			self.src = self.rule.rawsources.split("/")[0]
+		else:
+			self.src = self.snort_vars[self.rule.rawsources[1:]]
+
+		if self.rule.rawdestinations == "any":
+			self.dst = "any"
+		elif self.rule.rawdestinations.find("/") != -1:
+			self.dst = self.rule.rawdestinations.split("/")[0]
+		else:
+			self.dst = self.snort_vars[self.rule.rawdestinations[1:]]
+
 		self.sport	   = ""
 		self.dport	   = ""
 		self.proto	   = self.rule.proto
@@ -208,19 +222,35 @@ class PayloadGenerator:
 			self.sport = self.snort_vars[sports[1:]]
 		elif sports == "any":
 			self.sport = "9001"
-		elif sports.find(":") != -1:
-			self.sport = sports.split(":")[0]
 		else:
 			self.sport = sports
+
+		if sports.find(":") != -1:
+			self.sport = sports.split(":")[0]
+			sports = str(self.sport)
+		if sports.find("!") != -1:
+			self.sport = int(sports[1:]) -1
+			sports = str(self.sport)
+		if sports.find("[") != -1:
+			self.sport = sports.split(",")[1]
 
 		if dports[1:] in self.snort_vars:
 			self.dport = self.snort_vars[dports[1:]]
 		elif dports == "any":
 			self.dport = "9001"
-		elif dports.find(":") != -1:
-			self.dport = dports.split(":")[0]
 		else:
 			self.dport = dports
+
+		if dports.find(":") != -1:
+			self.dport = dports.split(":")[0]
+			dports = str(self.dport)
+		if dports.find("!") != -1:
+			self.dport = int(dports[1:]) -1
+			dports = str(self.dport)
+		if dports.find("[") != -1:
+			self.dport = dports.split(",")[1]
+		#else:
+		#	self.dport = dports
 
 		self.protocol.sport = int(self.sport)
 		self.protocol.dport = int(self.dport)
