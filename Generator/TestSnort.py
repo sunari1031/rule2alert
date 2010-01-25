@@ -45,13 +45,17 @@ class TestSnort:
         elif len(self.alerts) < len(self.loaded_sids):
             f = open("output/fail.log",'w')
             f2 = open("output/success.log",'w')
-            missed = len(self.loaded_sids) - len(self.alerts)
-            print "Failed to alert on %d rules" % missed
+            missed = 0
+            success = 0
             for sid in self.loaded_sids:
                 if not sid in self.alert_sids:
+                    missed += 1
                     f.write(sid + "\n")
                 if sid in self.alert_sids:
+                    success += 1
                     f2.write(sid + "\n")
+            print "Alerted on %d rules" % success
+            print "Failed to alert on %d rules" % missed
                     
             f.close()
             f2.close()

@@ -58,21 +58,21 @@ class PayloadGenerator:
 		itered = []
 
 		for c in self.contents:
-			if c.isHTTP:
-				oldc = c
-				h = HTTP()
-				h.check(c.payload)
-				h.build()
-				c.payload = h.payload
-				c.ini = 0
-				c.end = len(c.payload)
-				itered.append(c)
+			#if c.isHTTP:
+			#	oldc = c
+			#	h = HTTP()
+			#	h.check(c.payload)
+			#	h.build()
+			#	c.payload = h.payload
+			#	c.ini = 0
+			#	c.end = len(c.payload)
+			#	itered.append(c)
 	
-				continue
+			#	continue
 
 			if not oldc:
 				c.ini = 0
-				#c.end = len(c.content)
+
 				c.end = len(c.payload)
 			else:
 				c.ini = oldc.end + 1
@@ -139,6 +139,7 @@ class PayloadGenerator:
 		source_port = self.protocol.sport
 		dest_ip	    = self.ip.dst
 		dest_port   = self.protocol.dport
+		flag        = "PA"
 
 		#Set flow
 		if self.flow is not None:
@@ -152,6 +153,9 @@ class PayloadGenerator:
 				source_port = self.protocol.dport
 				dest_ip = self.ip.src
 				dest_port = self.protocol.sport
+				flag = "A"
+			elif self.flow.stateless:
+				flag = "A"
 
 		if self.proto == "tcp":
 			seq_num, ack_num = self.get_seqack()
@@ -159,9 +163,9 @@ class PayloadGenerator:
 				seq_num = 9001
 				ack_num = 9002
 
-			p = IP(src=source_ip, dst=dest_ip)/TCP(flags="PA", sport=source_port, dport=dest_port, seq=seq_num, ack=ack_num)/payload
+			p = IP(src=source_ip, dst=dest_ip)/TCP(flags=flag, sport=source_port, dport=dest_port, seq=seq_num, ack=ack_num)/payload
 
-			rst = IP(src=source_ip, dst=dest_ip)/TCP(flags="R", sport=source_port, dport=dest_port)
+			#rst = IP(src=source_ip, dst=dest_ip)/TCP(flags="R", sport=source_port, dport=dest_port)
 
 		elif self.proto == "udp":
 			p = IP(src=source_ip, dst=dest_ip)/UDP(sport=source_port, dport=dest_port)/payload
@@ -192,6 +196,11 @@ class PayloadGenerator:
 		seq = self.packets[-1].seq
 		ack = self.packets[-1].ack
 
+		if self.flow is not None:
+			if self.flow.to_client or self.flow.from_server:
+				seq = self.packets[-2].seq + 1
+				ack = self.packets[-1].seq
+			
 		return seq,ack
 
 	def parseComm(self, sports, dports):
@@ -212,10 +221,15 @@ class PayloadGenerator:
 		if self.src == "any":
 			self.src = "1.1.1.1"
 		if self.dst == "any":
-			self.dst = "1.1.1.1"
+			self.dst = "2.2.2.2"
 
-		self.ip.src = self.src
-		self.ip.dst = self.dst
+		try:
+			self.ip.src = self.src
+			self.ip.dst = self.dst
+		except:
+			print "ERROR:"
+			print self.src
+			print self.dst
 
 		#Do the same type of thing for ports
 		if sports[1:] in self.snort_vars:
@@ -225,14 +239,12 @@ class PayloadGenerator:
 		else:
 			self.sport = sports
 
-		if sports.find(":") != -1:
+		if self.sport.find(":") != -1:
 			self.sport = sports.split(":")[0]
-			sports = str(self.sport)
-		if sports.find("!") != -1:
-			self.sport = int(sports[1:]) -1
-			sports = str(self.sport)
-		if sports.find("[") != -1:
-			self.sport = sports.split(",")[1]
+		if self.sport.find("!") != -1:
+			self.sport = int(self.sport[1:]) -1
+		if self.sport.find("[") != -1:
+			self.sport = self.sport.split(",")[1]
 
 		if dports[1:] in self.snort_vars:
 			self.dport = self.snort_vars[dports[1:]]
@@ -241,22 +253,21 @@ class PayloadGenerator:
 		else:
 			self.dport = dports
 
-		if dports.find(":") != -1:
-			self.dport = dports.split(":")[0]
-			dports = str(self.dport)
-		if dports.find("!") != -1:
-			self.dport = int(dports[1:]) -1
-			dports = str(self.dport)
-		if dports.find("[") != -1:
-			self.dport = dports.split(",")[1]
-		#else:
-		#	self.dport = dports
+		if self.dport.find(":") != -1:
+			self.dport = self.dport.split(":")[0]
+		if self.dport.find("!") != -1:
+			self.dport = int(self.dport[1:])
+		if self.dport.find("[") != -1:
+			self.dport = self.dport.split(",")[1]
 
-		self.protocol.sport = int(self.sport)
-		self.protocol.dport = int(self.dport)
+		try:
+			self.protocol.sport = int(self.sport)
+			self.protocol.dport = int(self.dport)
+		except:
+			print "Error Assigning SPORT or DPORT"
+			print "SPORT: %s" % str(self.sport)
+			print "DPORT: %s" % str(self.dport)
 		
-	def write_packets(self, pcap):
-		wrpcap(pcap, self.packets)
 
 	def hexPrint(self):
 		str = ''

@@ -18,6 +18,9 @@ class r2a:
 		self.options = options
 		#Snort conf variables
 		self.snort_vars = SnortConf(self.options.snort_conf).parse()
+		if self.options.extNet:
+			print "SETTING EXTERNAL NET"
+			self.snort_vars["EXTERNAL_NET"] = self.options.extNet
 		#Snort rules
 		self.rules = self.loadRules(self.options.rule_file)
 		#Packet generator
@@ -35,6 +38,7 @@ class r2a:
 		#Regexp for avoid comments and empty lines
 		pcomments = re.compile('^\s*#')
 		pemptylines = re.compile('^\s*$')
+		#f = open("output/error.log",'w')
 		#Go through each snort rule
 		for snort_rule in self.rules:
 			snort_rule = snort_rule.strip()
@@ -65,14 +69,19 @@ class r2a:
 
 				except:
 					traceback.print_exc()
+					#eror=sys.exc_info()
+					#f.write("%s\r\n" % error)
 					#print "Parser failed with rule: " + snort_rule
 					print "Parser failed - skipping rule"
 					continue
+
+		#f.close()
 		print "Loaded %d rules succesfully!" % self.rules_loaded
 
 		print "Writing packets to pcap..."
 		
-		self.write_packets()
+		if self.packets and self.options.pcap:
+			self.write_packets()
 
 		if self.options.testSnort:
 			self.test_snort()
@@ -103,9 +112,10 @@ def parseArgs():
 
 	parser.add_option("-v", help="Verbose hex output of raw alert", action="store_true", dest="hex")
 	parser.add_option("-t", help="Test rule against current snort configuration", action="store_true", dest="testSnort")
+	parser.add_option("-e", help="Set $EXTERNAL_NET IP Address", action="store", type="string", dest="extNet")
 
 	if len(sys.argv) == 1:
-		print usage
+		parser.print_help()
 		sys.exit(0)
 
 	(options, args) = parser.parse_args(sys.argv)
