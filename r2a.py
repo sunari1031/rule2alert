@@ -19,8 +19,9 @@ class r2a:
 		#Snort conf variables
 		self.snort_vars = SnortConf(self.options.snort_conf).parse()
 		if self.options.extNet:
-			print "SETTING EXTERNAL NET"
 			self.snort_vars["EXTERNAL_NET"] = self.options.extNet
+		if self.options.homeNet:
+			self.snort_vars["HOME_NET"] = self.options.homeNet
 		#Snort rules
 		self.rules = self.loadRules(self.options.rule_file)
 		#Packet generator
@@ -107,6 +108,7 @@ def parseArgs():
 
 	parser.add_option("-v", help="Verbose hex output of raw alert", action="store_true", dest="hex")
 	parser.add_option("-t", help="Test rule against current snort configuration", action="store_true", dest="testSnort")
+	parser.add_option("-m", help="Set $HOME_NET IP Address", action="store", type="string", dest="homeNet")
 	parser.add_option("-e", help="Set $EXTERNAL_NET IP Address", action="store", type="string", dest="extNet")
 
 	if len(sys.argv) == 1:
