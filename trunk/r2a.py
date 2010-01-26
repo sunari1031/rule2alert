@@ -38,7 +38,6 @@ class r2a:
 		#Regexp for avoid comments and empty lines
 		pcomments = re.compile('^\s*#')
 		pemptylines = re.compile('^\s*$')
-		#f = open("output/error.log",'w')
 		#Go through each snort rule
 		for snort_rule in self.rules:
 			snort_rule = snort_rule.strip()
@@ -57,7 +56,6 @@ class r2a:
 					self.sids.append(r.sid)
 
 					for p in self.ContentGen.packets:
-					#	print p.summary()
 						self.packets.append(p)
 
 					if self.options.hex:
@@ -69,21 +67,18 @@ class r2a:
 
 				except:
 					traceback.print_exc()
-					#eror=sys.exc_info()
-					#f.write("%s\r\n" % error)
-					#print "Parser failed with rule: " + snort_rule
 					print "Parser failed - skipping rule"
 					continue
 
-		#f.close()
 		print "Loaded %d rules succesfully!" % self.rules_loaded
 
-		print "Writing packets to pcap..."
 		
 		if self.packets and self.options.pcap:
+			print "Writing packets to pcap..."
 			self.write_packets()
 
-		if self.options.testSnort:
+		if self.options.testSnort and self.options.pcap:
+			print "Running snort test..."
 			self.test_snort()
 
 	#Reads in the rule file specified by the user

@@ -30,15 +30,19 @@ class PayloadGenerator:
 			self.src = "any"
 		elif self.rule.rawsources.find("/") != -1:
 			self.src = self.rule.rawsources.split("/")[0]
-		else:
+		elif self.rule.rawsources[1:] in self.snort_vars:
 			self.src = self.snort_vars[self.rule.rawsources[1:]]
+		else:
+			self.src = self.rule.rawsources
 
 		if self.rule.rawdestinations == "any":
 			self.dst = "any"
 		elif self.rule.rawdestinations.find("/") != -1:
 			self.dst = self.rule.rawdestinations.split("/")[0]
-		else:
+		elif self.rule.rawdestinations[1:] in self.snort_vars:
 			self.dst = self.snort_vars[self.rule.rawdestinations[1:]]
+		else:
+			self.dst = self.rule.rawdestinations
 
 		self.sport	   = ""
 		self.dport	   = ""
@@ -47,6 +51,7 @@ class PayloadGenerator:
 		self.ip  	   = IP()
 		self.handshake = False
 		self.packets   = []
+
 		self.parseComm(self.rule.rawsrcports, self.rule.rawdesports)
 		#self.build()
 		
@@ -58,18 +63,6 @@ class PayloadGenerator:
 		itered = []
 
 		for c in self.contents:
-			#if c.isHTTP:
-			#	oldc = c
-			#	h = HTTP()
-			#	h.check(c.payload)
-			#	h.build()
-			#	c.payload = h.payload
-			#	c.ini = 0
-			#	c.end = len(c.payload)
-			#	itered.append(c)
-	
-			#	continue
-
 			if not oldc:
 				c.ini = 0
 
@@ -143,12 +136,7 @@ class PayloadGenerator:
 
 		#Set flow
 		if self.flow is not None:
-			if self.flow.to_server or self.flow.from_client:
-				source_ip = self.ip.src
-				source_port = self.protocol.sport
-				dest_ip = self.ip.dst
-				dest_port = self.protocol.dport
-			elif self.flow.to_client or self.flow.from_server:
+			if self.flow.to_client or self.flow.from_server:
 				source_ip = self.ip.dst
 				source_port = self.protocol.dport
 				dest_ip = self.ip.src
@@ -163,7 +151,7 @@ class PayloadGenerator:
 				seq_num = 9001
 				ack_num = 9002
 
-			p = IP(src=source_ip, dst=dest_ip)/TCP(flags=flag, sport=source_port, dport=dest_port, seq=seq_num, ack=ack_num)/payload
+			p = IP(src=source_ip, dst=dest_ip)/TCP(flags="PA", sport=source_port, dport=dest_port, seq=seq_num, ack=ack_num)/payload
 
 			#rst = IP(src=source_ip, dst=dest_ip)/TCP(flags="R", sport=source_port, dport=dest_port)
 
@@ -233,32 +221,32 @@ class PayloadGenerator:
 
 		#Do the same type of thing for ports
 		if sports[1:] in self.snort_vars:
-			self.sport = self.snort_vars[sports[1:]]
+			self.sport = str(self.snort_vars[sports[1:]])
 		elif sports == "any":
 			self.sport = "9001"
 		else:
-			self.sport = sports
+			self.sport = str(sports)
 
 		if self.sport.find(":") != -1:
-			self.sport = sports.split(":")[0]
+			self.sport = str(sports.split(":")[0])
 		if self.sport.find("!") != -1:
-			self.sport = int(self.sport[1:]) -1
+			self.sport = str(int(self.sport[1:]) -1)
 		if self.sport.find("[") != -1:
-			self.sport = self.sport.split(",")[1]
+			self.sport = str(self.sport.split(",")[1])
 
 		if dports[1:] in self.snort_vars:
-			self.dport = self.snort_vars[dports[1:]]
+			self.dport = str(self.snort_vars[dports[1:]])
 		elif dports == "any":
 			self.dport = "9001"
 		else:
-			self.dport = dports
+			self.dport = str(dports)
 
 		if self.dport.find(":") != -1:
-			self.dport = self.dport.split(":")[0]
+			self.dport = str(self.dport.split(":")[0])
 		if self.dport.find("!") != -1:
-			self.dport = int(self.dport[1:])
+			self.dport = str(int(self.dport[1:]) -1)
 		if self.dport.find("[") != -1:
-			self.dport = self.dport.split(",")[1]
+			self.dport = str(self.dport.split(",")[1])
 
 		try:
 			self.protocol.sport = int(self.sport)
