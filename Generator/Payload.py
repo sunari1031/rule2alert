@@ -26,6 +26,9 @@ class PayloadGenerator:
 		#These are for crafting packets
 		self.src = ""
 		self.dst = ""
+		self.home = ""
+		self.ext  = ""
+
 		if self.rule.rawsources == "any":
 			self.src = "any"
 		elif self.rule.rawsources.find("/") != -1:
@@ -43,6 +46,18 @@ class PayloadGenerator:
 			self.dst = self.snort_vars[self.rule.rawdestinations[1:]]
 		else:
 			self.dst = self.rule.rawdestinations
+
+
+		if self.rule.rawsources[1:] == "HOME_NET":
+			self.home = "src"
+		elif self.rule.rawdestinations[1:] == "HOME_NET":
+			self.home = "dst"
+	
+		#if self.rule.rawsources[1:] == "EXTERNAL_NET":
+		#	self.ext = "src"
+		#elif self.rule.rawdestinations[1:] == "EXTERNAL_NET":
+		#	self.ext = "dst"
+		
 
 		self.sport	   = ""
 		self.dport	   = ""
@@ -135,15 +150,15 @@ class PayloadGenerator:
 		flag        = "PA"
 
 		#Set flow
-		if self.flow is not None:
-			if self.flow.to_client or self.flow.from_server:
-				source_ip = self.ip.dst
-				source_port = self.protocol.dport
-				dest_ip = self.ip.src
-				dest_port = self.protocol.sport
-				flag = "A"
-			elif self.flow.stateless:
-				flag = "A"
+		#if self.flow is not None:
+		#	if self.flow.to_client or self.flow.from_server:
+		#		source_ip = self.ip.dst
+		#		source_port = self.protocol.dport
+		#		dest_ip = self.ip.src
+		#		dest_port = self.protocol.sport
+		#		flag = "A"
+		#	elif self.flow.stateless:
+		#		flag = "A"
 
 		if self.proto == "tcp":
 			seq_num, ack_num = self.get_seqack()
@@ -151,7 +166,7 @@ class PayloadGenerator:
 				seq_num = 9001
 				ack_num = 9002
 
-			p = IP(src=source_ip, dst=dest_ip)/TCP(flags="PA", sport=source_port, dport=dest_port, seq=seq_num, ack=ack_num)/payload
+			p = IP(src=source_ip, dst=dest_ip)/TCP(flags=flag, sport=source_port, dport=dest_port, seq=seq_num, ack=ack_num)/payload
 
 			#rst = IP(src=source_ip, dst=dest_ip)/TCP(flags="R", sport=source_port, dport=dest_port)
 
@@ -164,14 +179,27 @@ class PayloadGenerator:
 
 
 	def build_handshake(self):
+		ipsrc   = self.ip.src
+		ipdst   = self.ip.dst
+		portsrc = self.protocol.sport
+		portdst = self.protocol.dport
+	
+		if self.home == "dst":
+			print "FLIP!"
+			ipsrc = self.ip.dst
+			ipdst = self.ip.src
+			portsrc = self.protocol.dport
+			portdst = self.protocol.sport
+			
+
 		client_isn = 1932
 		server_isn = 1059
 
-		syn = IP(src=self.ip.src, dst=self.ip.dst)/TCP(flags="S", sport=self.protocol.sport, dport=self.protocol.dport, seq=client_isn)
+		syn = IP(src=ipsrc, dst=ipdst)/TCP(flags="S", sport=portsrc, dport=portdst, seq=client_isn)
 
-		synack = IP(src=self.ip.dst, dst=self.ip.src)/TCP(flags="SA", sport=self.protocol.dport, dport=self.protocol.sport, seq=server_isn, ack=syn.seq+1)
+		synack = IP(src=ipdst, dst=ipsrc)/TCP(flags="SA", sport=portdst, dport=portsrc, seq=server_isn, ack=syn.seq+1)
 
-		ack = IP(src=self.ip.src, dst=self.ip.dst)/TCP(flags="A", sport=self.protocol.sport, dport=self.protocol.dport, seq=syn.seq+1, ack=synack.seq+1)
+		ack = IP(src=ipsrc, dst=ipdst)/TCP(flags="A", sport=portsrc, dport=portdst, seq=syn.seq+1, ack=synack.seq+1)
 	
 		self.packets.append(syn)
 		self.packets.append(synack)

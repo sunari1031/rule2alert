@@ -9,6 +9,7 @@
 
 import re,sys
 from binascii import *
+from RevRegex import *
 
 class RuleUriContent:
     def __init__(self, uricontent):
@@ -237,6 +238,11 @@ class Rule:
     #isHTTP = False
 
     def __init__(self,rule):
+        #We need to flatten the rule here for pcre
+        r = RevRegex(rule)
+        r.flatten()
+        rule = r.rule
+
         p = re.compile(r'^(?P<general>[^\(]+)\s*\((?P<rawoptions>.*)\)\s*$')
         m = p.search(rule)
         general = m.group("general")
