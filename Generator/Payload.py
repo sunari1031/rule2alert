@@ -5,6 +5,7 @@ from scapy.all import *
 from Protocols.HTTP import *
 import sys
 import string
+#UPDATE
 
 class PayloadGenerator:
 	pkts = []
