@@ -163,19 +163,32 @@ class PayloadGenerator:
 		if self.proto == "tcp":
 			seq_num, ack_num = self.get_seqack()
 			if seq_num is None:
+				#seq_num = RandShort()
+				#ack_num = RandShort()
 				seq_num = 9001
 				ack_num = 9002
 
 			p = IP(src=source_ip, dst=dest_ip)/TCP(flags=flag, sport=source_port, dport=dest_port, seq=seq_num, ack=ack_num)/payload
 
-			#rst = IP(src=source_ip, dst=dest_ip)/TCP(flags="R", sport=source_port, dport=dest_port)
+			##rst = IP(src=source_ip, dst=dest_ip)/TCP(flags="R", sport=source_port, dport=dest_port)
+			new_seq = seq_num + len(payload)
+			fin_ack = IP(src=source_ip, dst=dest_ip)/TCP(flags="FA", sport=source_port, dport=dest_port, seq=new_seq, ack=ack_num)
+			ack     = IP(src=dest_ip, dst=source_ip)/TCP(flags="A", sport=dest_port, dport=source_port, seq=ack_num, ack=fin_ack.seq+1)
+	
+			self.packets.append(p)
+			self.packets.append(fin_ack)
+			self.packets.append(ack)
 
 		elif self.proto == "udp":
 			p = IP(src=source_ip, dst=dest_ip)/UDP(sport=source_port, dport=dest_port)/payload
+	
+			self.packets.append(p)
 
 
 
-		self.packets.append(p)
+		#self.packets.append(p)
+		#self.packets.append(fin_ack)
+		#self.packets.append(ack)
 
 
 	def build_handshake(self):
@@ -194,6 +207,8 @@ class PayloadGenerator:
 
 		client_isn = 1932
 		server_isn = 1059
+		#client_isn = RandShort()
+		#server_isn = RandShort()
 
 		syn = IP(src=ipsrc, dst=ipdst)/TCP(flags="S", sport=portsrc, dport=portdst, seq=client_isn)
 
@@ -251,7 +266,8 @@ class PayloadGenerator:
 		if sports[1:] in self.snort_vars:
 			self.sport = str(self.snort_vars[sports[1:]])
 		elif sports == "any":
-			self.sport = "9001"
+			#self.sport = "9001"
+			self.sport = str(RandShort())
 		else:
 			self.sport = str(sports)
 
@@ -265,7 +281,8 @@ class PayloadGenerator:
 		if dports[1:] in self.snort_vars:
 			self.dport = str(self.snort_vars[dports[1:]])
 		elif dports == "any":
-			self.dport = "9001"
+			#self.dport = "9001"
+			self.dport = str(RandShort())
 		else:
 			self.dport = str(dports)
 

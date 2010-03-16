@@ -34,8 +34,18 @@ class r2a:
 		self.rules_loaded = 0
 		#Collection of SIDS loaded
 		self.sids = []
+		#Used in SID reproduction
+		self.count = None
+		self.manual = False
+		if self.options.manualNum and self.options.manualSid:
+			if int(self.options.manualNum) < 1:
+				self.manual = False
+			else:
+				self.manual = True
+				self.count = int(self.options.manualNum)
 
 	def main(self):
+		#manualCount = 0
 		#Regexp for avoid comments and empty lines
 		pcomments = re.compile('^\s*#')
 		pemptylines = re.compile('^\s*$')
@@ -49,6 +59,11 @@ class r2a:
 			if not comments and not emptylines:
 				try:
 					r = Rule(snort_rule)
+
+					if self.manual and str(r.sid) == self.options.manualSid and self.count != 1:
+						self.count -= 1
+						self.rules.append(snort_rule)
+	
 					print "Building Rule: %s" % str(r.sid)
 					self.ContentGen = PayloadGenerator(r, self.snort_vars)
 
@@ -110,6 +125,8 @@ def parseArgs():
 	parser.add_option("-t", help="Test rule against current snort configuration", action="store_true", dest="testSnort")
 	parser.add_option("-m", help="Set $HOME_NET IP Address", action="store", type="string", dest="homeNet")
 	parser.add_option("-e", help="Set $EXTERNAL_NET IP Address", action="store", type="string", dest="extNet")
+	parser.add_option("-s", help="Manual SID Selection", action="store", type="string", dest="manualSid")
+	parser.add_option("-n", help="Number of times to alert SID", action="store", type="string", dest="manualNum")
 
 	if len(sys.argv) == 1:
 		parser.print_help()
