@@ -23,6 +23,7 @@ class PayloadGenerator:
 		self.flow = rule.flow
 		self.itered = []
 		self.snort_vars = snort_vars
+		self.flip = False
 
 		#These are for crafting packets
 		self.src = ""
@@ -137,10 +138,29 @@ class PayloadGenerator:
 
 		self.itered = itered
 
+		#ADDED - FOR HTTP SUPPORT
+		if self.sport == "80" or self.dport == "80":
+			if self.payload.raw.find("User-Agent") != -1 or self.payload.raw.find("GET") != -1 or self.payload.raw.find("POST") != -1:
+				h = HTTP()
+				h.check(self.payload.raw)
+				h.build()
+				self.build_packet(h.payload)
+				return h.payload
+			if not self.contents and self.uricontents:
+				uri = ""
+				for u in self.uricontents:
+					print u.uricontent
+					uri = "%s%s" % (uri, str(u.uricontent))
 
-		self.build_packet(self.payload.raw)
+				h = HTTP()
+				h.uri = uri
+				h.build()
+				self.build_packet(h.payload)
+				return h.payload
 
-		return self.payload
+		else:
+			self.build_packet(self.payload.raw)
+			return self.payload
 
 	def build_packet(self, payload):
 
@@ -200,6 +220,7 @@ class PayloadGenerator:
 	
 		if self.home == "dst":
 			print "FLIP!"
+			self.flip = True
 			ipsrc = self.ip.dst
 			ipdst = self.ip.src
 			portsrc = self.protocol.dport
@@ -225,8 +246,12 @@ class PayloadGenerator:
 		if len(self.packets) == 0:
 			return None,None
 
-		seq = self.packets[-1].seq
-		ack = self.packets[-1].ack
+		if self.flip:
+			seq = self.packets[-2].seq +1
+			ack = self.packets[-2].ack
+		else:
+			seq = self.packets[-1].seq
+			ack = self.packets[-1].ack
 
 		if self.flow is not None:
 			if self.flow.to_client or self.flow.from_server:
