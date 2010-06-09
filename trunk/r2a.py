@@ -17,7 +17,14 @@ class r2a:
 		#Command line options
 		self.options = options
 		#Snort conf variables
-		self.snort_vars = SnortConf(self.options.snort_conf).parse()
+		if not self.options.snort_conf: 
+			if not self.options.extNet or not self.options.homeNet:
+				print "If no snort conf, please provide ExtNet and HomeNet variables via command line"
+				sys.exit(0)
+			else:
+				self.snort_vars = SnortConf().default(self.options.extNet, self.options.homeNet)
+		else:
+			self.snort_vars = SnortConf(self.options.snort_conf).parse()
 		if self.options.extNet:
 			self.snort_vars["EXTERNAL_NET"] = self.options.extNet
 		if self.options.homeNet:
@@ -92,6 +99,7 @@ class r2a:
 		if self.packets and self.options.pcap:
 			print "Writing packets to pcap..."
 			self.write_packets()
+			print "Finished writing packets"
 
 		if self.options.testSnort and self.options.pcap:
 			print "Running snort test..."

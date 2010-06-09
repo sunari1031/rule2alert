@@ -1,4 +1,4 @@
-import re
+import re,binascii
 
 class HTTP:
 	
@@ -13,11 +13,40 @@ class HTTP:
 		self.payload    = ""
 
 	def build(self):
+		if self.uri.find("|") != -1:
+			while self.uri.find("|") != -1:
+				m = re.search("\|([A-F0-9\s]+)\|", self.uri)
+				if not m:
+					break
+				total = m.group(0)
+				payload = total
+				val = m.group(1)
+				values = []
+				if len(val) > 2: 
+					values = val.split(" ")
+				else: 
+					values.append(val)
+
+				for v in values:
+					payload = re.sub(v.strip(), binascii.unhexlify(v.strip()), payload)
+					payload = re.sub(' ','',payload)
+
+				start = self.uri.find(total)
+				if start == 0:
+					self.uri = payload[1:-1] + self.uri[len(total):]
+				else:
+					self.uri = self.uri[:start] + payload[1:-1] + self.uri[start+len(total):]
+		
+		if not self.uri.startswith("/"):
+			self.uri = "/%s" % self.uri
+					
+
+
 		self.payload = "%s %s %s\r\nHost: %s\r\nUser-Agent: %s\r\nKeep-Alive: %s\r\nConnection: %s\r\n\r\n" % (self.method, self.uri, self.version, self.host, self.user_agent, self.keep_alive, self.connection)
 	
 
 	def check(self, payload):
-		m = re.search("(?P<key>[\w\-]+)(:|\|3a\|)\s*(?P<value>[\w\s/\.;\-\:\(\)]+)", payload)
+		m = re.search("(?P<key>[\w\-]+)(\\\:|\:|\|3a\|)\s+(?P<value>[\w\s/\.;\-\:\(\)]+)", payload)
 		if m:
 			key = m.group("key")
 			value = m.group("value")
