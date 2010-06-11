@@ -149,7 +149,7 @@ class PayloadGenerator:
 				if not h: h = HTTP()
 				uri = ""
 				for u in self.uricontents:
-					print u.uricontent
+					#print u.uricontent
 					uri = "%s%s" % (uri, str(u.uricontent))
 				h.uri = uri
 				h.build()
