@@ -37,6 +37,8 @@ class HTTP:
 				else:
 					self.uri = self.uri[:start] + payload[1:-1] + self.uri[start+len(total):]
 		
+		if self.uri.startswith("."):
+			self.uri = "test%s" % self.uri
 		if not self.uri.startswith("/"):
 			self.uri = "/%s" % self.uri
 					

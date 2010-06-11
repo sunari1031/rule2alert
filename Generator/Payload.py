@@ -139,25 +139,23 @@ class PayloadGenerator:
 		self.itered = itered
 
 		#ADDED - FOR HTTP SUPPORT
+		h = None
 		if self.sport == "80" or self.dport == "80":
 			if self.payload.raw.find("User-Agent") != -1 or self.payload.raw.find("GET") != -1 or self.payload.raw.find("POST") != -1:
 				h = HTTP()
 				h.check(self.payload.raw)
 				h.build()
-				self.build_packet(h.payload)
-				return h.payload
-			if not self.contents and self.uricontents:
+			if self.uricontents:
+				if not h: h = HTTP()
 				uri = ""
 				for u in self.uricontents:
 					print u.uricontent
 					uri = "%s%s" % (uri, str(u.uricontent))
-
-				h = HTTP()
 				h.uri = uri
 				h.build()
-				self.build_packet(h.payload)
-				return h.payload
-
+		if h:
+			self.build_packet(h.payload)
+			return h.payload
 		else:
 			self.build_packet(self.payload.raw)
 			return self.payload
@@ -218,13 +216,13 @@ class PayloadGenerator:
 		portsrc = self.protocol.sport
 		portdst = self.protocol.dport
 	
-		if self.home == "dst":
-			print "FLIP!"
-			self.flip = True
-			ipsrc = self.ip.dst
-			ipdst = self.ip.src
-			portsrc = self.protocol.dport
-			portdst = self.protocol.sport
+		#if self.home == "dst":
+		#	print "FLIP!"
+		#	self.flip = True
+		#	ipsrc = self.ip.dst
+		#	ipdst = self.ip.src
+		#	portsrc = self.protocol.dport
+		#	portdst = self.protocol.sport
 			
 
 		client_isn = 1932
