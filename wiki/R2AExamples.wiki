@@ -1,4 +1,4 @@
-#summary One-sentence summary of this page.
+#summary Command line examples of Rule2Alert.
 
 = Rule2Alert Example Usage Page =
 
