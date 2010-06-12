@@ -253,8 +253,11 @@ class PayloadGenerator:
 
 		if self.flow is not None:
 			if self.flow.to_client or self.flow.from_server:
-				seq = self.packets[-2].seq + 1
-				ack = self.packets[-1].seq
+				#QUICK FIX
+				#seq = self.packets[-2].seq + 1
+				seq = self.packets[-1].seq
+				ack = self.packets[-1].ack
+				#ack = self.packets[-1].seq
 			
 		return seq,ack
 
