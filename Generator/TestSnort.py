@@ -14,14 +14,14 @@ class SnortAlert:
 
 class TestSnort:
     
-    def __init__(self, snort_conf, pcap, loaded_sids):
+    def __init__(self, pcap, loaded_sids):
         self.logfile = "/var/log/snort/r2a.log"
         self.alerts = []
         self.alert_sids = []
-        self.snort_conf = snort_conf
         self.pcap = pcap
         self.loaded_sids = loaded_sids
-        self.cmd    = "snort -c %s -K none -q -A console -r %s" % (self.snort_conf, self.pcap)
+        #self.cmd    = "snort -c %s -K none -q -A console -r %s" % (self.snort_conf, self.pcap)
+	self.cmd    = "snort -c /etc/snort/snort.conf -k none -q -A console -r %s" % (self.pcap)
 
     def run(self):
         p = Popen(self.cmd, shell=True, stdout=PIPE, stderr=PIPE)
@@ -29,20 +29,22 @@ class TestSnort:
 
         stdout = stdout.splitlines()
         sig_reg = re.compile(r'\[\*\*\]\s+\[(?P<gid>\d+):(?P<sid>\d+):(?P<rev>\d+)\]\s*(?P<msg>.*)\s*\[\*\*\]')
-    
+
         for alert in stdout:
             m = sig_reg.search(alert)
             if m:
                 try:
                     s = SnortAlert(m.group("gid"),m.group("sid"),m.group("rev"),m.group("msg"))
                     self.alerts.append(s)
-                    self.alert_sids.append(s.sid)
+                    if not s.sid in self.alert_sids:
+                        self.alert_sids.append(s.sid)
                 except:
                     print "Error parsing alert: %s" % alert
 
         if len(self.alerts) == len(self.loaded_sids):
             print "Successfully alerted on all loaded rules"
-        elif len(self.alerts) < len(self.loaded_sids):
+        #elif len(self.alerts) < len(self.loaded_sids):
+	else:
             f = open("output/fail.log",'w')
             f2 = open("output/success.log",'w')
             missed = 0

@@ -117,7 +117,7 @@ class r2a:
 		wrpcap(self.options.pcap, self.packets)
 
 	def test_snort(self):
-		t = TestSnort(self.options.snort_conf, self.options.pcap, self.sids)
+		t = TestSnort(self.options.pcap, self.sids)
 		t.run()
 
 #Parses arguments that are passed in through the cli

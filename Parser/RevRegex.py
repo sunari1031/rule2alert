@@ -14,6 +14,8 @@ class RevRegex:
 		withpcre = 0
 		failcase = 0
 		out = ''
+		uri = False
+		options = ''
 		pcres = re.findall('pcre:\s*"(.*?)";',self.rule)
 		for pcre in pcres:
 			#match = re.search('pcre:\s*"%s";' % pcre, self.rule)
@@ -23,16 +25,22 @@ class RevRegex:
 				#print 'fail pcre format on %s' % pcre
 				return None
 
-			goodFormat = re.search('^m?\/(.*)\/[UGBmsiR]*$',pcre) #.*\\\/[a-zA-Z]*$',pcre)
+			goodFormat = re.search('^m?\/(.*)\/([UGBmsiR]*$)',pcre) #.*\\\/[a-zA-Z]*$',pcre)
 			if not goodFormat:
 				#print 'fail goodFormat on %s (from %s)' % (pcre,self.rule)
 				return None
 
 			tmp = goodFormat.group(1)
+			options = goodFormat.group(2)
+
+			if options.find("U") != -1:
+				uri = True
 
 			#character replacements
 			#this sux but need to replace ? characters, need to do this before unescaping them that way we don't replace legitimate '?' characters
 			#tmp = re.sub('([^\\\\]).\\?','\\1',tmp)
+
+			#tmp = re.sub("^\^|\$$",'',tmp)
 
 			tmp = re.sub('\\\\x(([a-fA-F0-9]{2}\?)+)', '',tmp)
 			tmp = re.sub('\\\\x(([a-fA-F0-9]{2})+)', '|\\1|',tmp)
@@ -61,9 +69,15 @@ class RevRegex:
 
 			#capture classes
 			tmp = re.sub('\((.*?)\|.*?\)','\\1',tmp)
+
+			tmp = re.sub("^\^|\$$",'',tmp)
 		
 			#out += 'content:"%s";' % (tmp)
-			out = 'content:"%s";' % tmp
+			if uri:
+				out = 'uricontent:"%s";' % tmp
+				print out
+			else:
+				out = 'content:"%s";' % tmp
 
 			if out:
 				#print "RULE FLAT"

@@ -223,6 +223,15 @@ class PayloadGenerator:
 		#	ipdst = self.ip.src
 		#	portsrc = self.protocol.dport
 		#	portdst = self.protocol.sport
+
+		#This is for to_client rules.  We need to change the source/dest
+
+		if self.flow.to_client or self.flow.from_server:
+			self.flip = True
+			ipsrc = self.ip.dst
+			ipdst = self.ip.src
+			portsrc = self.protocol.dport
+			portdst = self.protocol.sport
 			
 
 		client_isn = 1932
@@ -251,12 +260,12 @@ class PayloadGenerator:
 			seq = self.packets[-1].seq
 			ack = self.packets[-1].ack
 
-		if self.flow is not None:
-			if self.flow.to_client or self.flow.from_server:
-				#QUICK FIX
-				#seq = self.packets[-2].seq + 1
-				seq = self.packets[-1].seq
-				ack = self.packets[-1].ack
+		#if self.flow is not None:
+		#	if self.flow.to_client or self.flow.from_server:
+		#		#QUICK FIX
+		#		#seq = self.packets[-2].seq + 1
+		#		seq = self.packets[-1].seq
+		#		ack = self.packets[-1].ack
 				#ack = self.packets[-1].seq
 			
 		return seq,ack
