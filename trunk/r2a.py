@@ -74,6 +74,9 @@ class r2a:
 					print "Building Rule: %s" % str(r.sid)
 					self.ContentGen = PayloadGenerator(r, self.snort_vars)
 
+					if self.ContentGen.notSupported:
+						continue
+
 					self.ContentGen.build()
 
 					self.sids.append(r.sid)
