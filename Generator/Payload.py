@@ -5,7 +5,7 @@ from scapy.all import *
 from Protocols.HTTP import *
 import sys
 import string
-#UPDATE
+import traceback
 
 class PayloadGenerator:
 	pkts = []
@@ -24,6 +24,7 @@ class PayloadGenerator:
 		self.itered = []
 		self.snort_vars = snort_vars
 		self.flip = False
+		self.notSupported = False
 
 		#These are for crafting packets
 		self.src = ""
@@ -85,9 +86,14 @@ class PayloadGenerator:
 
 				c.end = len(c.payload)
 			else:
-				c.ini = oldc.end + 1
+				if c.distance == 0:
+					c.ini = oldc.end
+				else:
+					c.ini = oldc.end + 1
+				#c.ini = oldc.end + 1
 				#c.end = c.ini + len(c.content)
 				c.end = c.ini + len(c.payload)
+
 
 			if c.offset and not oldc:
 				c.ini = c.ini + c.offset
@@ -154,6 +160,10 @@ class PayloadGenerator:
 				h.uri = uri
 				h.build()
 		if h:
+			if self.payload.raw:
+			#	h.method = "POST"
+			#	h.build()
+				h.payload = h.payload + self.payload.raw
 			self.build_packet(h.payload)
 			return h.payload
 		else:
@@ -161,7 +171,6 @@ class PayloadGenerator:
 			return self.payload
 
 	def build_packet(self, payload):
-
 		source_ip   = self.ip.src
 		source_port = self.protocol.sport
 		dest_ip	    = self.ip.dst
@@ -275,6 +284,10 @@ class PayloadGenerator:
 			self.protocol = TCP()
 		elif self.proto == "udp":
 			self.protocol = UDP()
+		else:
+			print "Protocol Not Supported"
+			self.notSupported = True
+			return 1
 		#If the source is using CIDR notiation
 		#Just pick the first IP in the subnet
 		if self.src.find("/") != -1:
@@ -336,6 +349,7 @@ class PayloadGenerator:
 			print "Error Assigning SPORT or DPORT"
 			print "SPORT: %s" % str(self.sport)
 			print "DPORT: %s" % str(self.dport)
+			traceback.print_exc()
 		
 
 	def hexPrint(self):

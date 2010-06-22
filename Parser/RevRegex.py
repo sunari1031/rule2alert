@@ -68,23 +68,30 @@ class RevRegex:
 			#not handled yet
 
 			#capture classes
+			tmp = re.sub("\?\|","\|",tmp)
+			tmp = re.sub("\?\)","\)",tmp)
+			#tmp = re.sub('\((.*?)[^\\\\]\|.*?\)','\\1',tmp)
 			tmp = re.sub('\((.*?)\|.*?\)','\\1',tmp)
 
 			tmp = re.sub("^\^|\$$",'',tmp)
-		
-			#out += 'content:"%s";' % (tmp)
+
+			tmp = re.sub("\.\+",'A',tmp)
+			#tmp = re.sub("\.",'A',tmp)
+
+			tmp = re.sub("\\\\s",' ',tmp)
+			tmp = re.sub("\\\\",'',tmp)
+
 			if uri:
+				tmp = re.sub(' ','%20',tmp)
 				out = 'uricontent:"%s";' % tmp
 				print out
 			else:
 				out = 'content:"%s";' % tmp
+				print out
 
 			if out:
-				#print "RULE FLAT"
 				start = self.rule.find('pcre:')
 				end = start + self.rule[start:].find('";') + 2
 				self.rule = self.rule[:start] + out + self.rule[end:]
-
-				#print self.rule
 
 				out = ''
