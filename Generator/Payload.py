@@ -6,6 +6,7 @@ from Protocols.HTTP import *
 import sys
 import string
 import traceback
+import random
 
 class PayloadGenerator:
 	pkts = []
@@ -193,8 +194,10 @@ class PayloadGenerator:
 			if seq_num is None:
 				#seq_num = RandShort()
 				#ack_num = RandShort()
-				seq_num = 9001
-				ack_num = 9002
+				#seq_num = 9001
+				#ack_num = 9002
+				seq_num = random.randint(1024,(2**32)-1)
+				ack_num = random.randint(1024,(2**32)-1)
 
 			p = IP(src=source_ip, dst=dest_ip)/TCP(flags=flag, sport=source_port, dport=dest_port, seq=seq_num, ack=ack_num)/payload
 
@@ -242,9 +245,11 @@ class PayloadGenerator:
 			portsrc = self.protocol.dport
 			portdst = self.protocol.sport
 			
+		client_isn = random.randint(1024, (2**32)-1)
+		server_isn = random.randint(1024, (2**32)-1)
 
-		client_isn = 1932
-		server_isn = 1059
+		#client_isn = 1932
+		#server_isn = 1059
 		#client_isn = RandShort()
 		#server_isn = RandShort()
 
