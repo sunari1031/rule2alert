@@ -1,1 +1,0 @@
-alert tcp $HOME_NET any -> $EXTERNAL_NET 80 (msg:"Snort alert"; flow:to_server,established; content:"|56 24 5a 63|"; content:"hey"; distance:5; within:12; sid:2000000; rev:1;)
