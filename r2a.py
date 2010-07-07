@@ -4,6 +4,7 @@ from Parser.RuleParser import *
 from Parser.SnortConf import *
 from Generator.Payload import *
 from Generator.TestSnort import *
+from Generator.TestSuricata import *
 from optparse import OptionParser
 import os,sys
 import re
@@ -108,6 +109,10 @@ class r2a:
 			print "Running snort test..."
 			self.test_snort()
 
+		if self.options.testSuricata and self.options.pcap:
+			print "Running Suricata test..."
+			self.test_suricata()
+
 	#Reads in the rule file specified by the user
 	def loadRules(self, rule_file):
 		f = open(rule_file, 'r')
@@ -123,6 +128,10 @@ class r2a:
 		t = TestSnort(self.options.pcap, self.sids)
 		t.run()
 
+	def test_suricata(self):
+		t = TestSuricata(self.options.pcap, self.sids, self.options.rule_file)
+		t.run()
+
 #Parses arguments that are passed in through the cli
 def parseArgs():
 	usage = "usage: python r2a.py [-vt] -f rule_file -c snort_config -w pcap"
@@ -134,6 +143,7 @@ def parseArgs():
 
 	parser.add_option("-v", help="Verbose hex output of raw alert", action="store_true", dest="hex")
 	parser.add_option("-t", help="Test rule against current snort configuration", action="store_true", dest="testSnort")
+	parser.add_option("-T", help="Test rule against current Suricata configuration", action="store_true", dest="testSuricata")
 	parser.add_option("-m", help="Set $HOME_NET IP Address", action="store", type="string", dest="homeNet")
 	parser.add_option("-e", help="Set $EXTERNAL_NET IP Address", action="store", type="string", dest="extNet")
 	parser.add_option("-s", help="Manual SID Selection", action="store", type="string", dest="manualSid")
