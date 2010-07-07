@@ -201,15 +201,15 @@ class PayloadGenerator:
 				ack_num = random.randint(1024,(2**32)-1)
 
 			#This is the actual data packet that will be sent containing the payload
-			p = Ether()/IP(src=source_ip, dst=dest_ip)/TCP(flags=flag, sport=source_port, dport=dest_port, seq=seq_num, ack=ack_num)/payload
+			p = IP(src=source_ip, dst=dest_ip)/TCP(flags=flag, sport=source_port, dport=dest_port, seq=seq_num, ack=ack_num)/payload
 
 			#We need to ACK the packet
-			returnAck = Ether()/IP(src=dest_ip, dst=source_ip)/TCP(flags="A", sport=dest_port, dport=source_port, seq=p.ack, ack=(p.seq + len(p[Raw])))
+			returnAck = IP(src=dest_ip, dst=source_ip)/TCP(flags="A", sport=dest_port, dport=source_port, seq=p.ack, ack=(p.seq + len(p[Raw])))
 
 			
 			#Now we build the Finshake
-			finAck = Ether()/IP(src=source_ip, dst=dest_ip)/TCP(flags="FA", sport=source_port, dport=dest_port, seq=returnAck.ack, ack=returnAck.seq)
-			finalAck = Ether()/IP(src=dest_ip, dst=source_ip)/TCP(flags="A", sport=dest_port, dport=source_port, seq=finAck.ack, ack=finAck.seq+1)
+			finAck = IP(src=source_ip, dst=dest_ip)/TCP(flags="FA", sport=source_port, dport=dest_port, seq=returnAck.ack, ack=returnAck.seq)
+			finalAck = IP(src=dest_ip, dst=source_ip)/TCP(flags="A", sport=dest_port, dport=source_port, seq=finAck.ack, ack=finAck.seq+1)
 
 
 			#fin_ack = IP(src=source_ip, dst=dest_ip)/TCP(flags="FA", sport=source_port, dport=dest_port, seq=new_seq, ack=ack_num)
@@ -223,7 +223,7 @@ class PayloadGenerator:
 			#self.packets.append(ack)
 
 		elif self.proto == "udp":
-			p = Ether()/IP(src=source_ip, dst=dest_ip)/UDP(sport=source_port, dport=dest_port)/payload
+			p = IP(src=source_ip, dst=dest_ip)/UDP(sport=source_port, dport=dest_port)/payload
 	
 			self.packets.append(p)
 
@@ -251,11 +251,11 @@ class PayloadGenerator:
 		client_isn = random.randint(1024, (2**32)-1)
 		server_isn = random.randint(1024, (2**32)-1)
 
-		syn = Ether()/IP(src=ipsrc, dst=ipdst)/TCP(flags="S", sport=portsrc, dport=portdst, seq=client_isn)
+		syn = IP(src=ipsrc, dst=ipdst)/TCP(flags="S", sport=portsrc, dport=portdst, seq=client_isn)
 
-		synack = Ether()/IP(src=ipdst, dst=ipsrc)/TCP(flags="SA", sport=portdst, dport=portsrc, seq=server_isn, ack=syn.seq+1)
+		synack = IP(src=ipdst, dst=ipsrc)/TCP(flags="SA", sport=portdst, dport=portsrc, seq=server_isn, ack=syn.seq+1)
 
-		ack = Ether()/IP(src=ipsrc, dst=ipdst)/TCP(flags="A", sport=portsrc, dport=portdst, seq=syn.seq+1, ack=synack.seq+1)
+		ack = IP(src=ipsrc, dst=ipdst)/TCP(flags="A", sport=portsrc, dport=portdst, seq=syn.seq+1, ack=synack.seq+1)
 	
 		self.packets.append(syn)
 		self.packets.append(synack)

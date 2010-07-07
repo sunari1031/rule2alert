@@ -18,6 +18,7 @@ class TestSnort:
         self.logfile = "/var/log/snort/r2a.log"
         self.alerts = []
         self.alert_sids = []
+        self.failSids = []
         self.pcap = pcap
         self.loaded_sids = loaded_sids
         #self.cmd    = "snort -c %s -K none -q -A console -r %s" % (self.snort_conf, self.pcap)
@@ -52,6 +53,7 @@ class TestSnort:
             for sid in self.loaded_sids:
                 if not sid in self.alert_sids:
                     missed += 1
+                    self.failSids.append(sid)
                     f.write(sid + "\n")
                 if sid in self.alert_sids:
                     success += 1
@@ -61,6 +63,8 @@ class TestSnort:
                     
             f.close()
             f2.close()
+
+        return self.failSids
             
     def readSnortAlerts(self):
         #12/21-16:14:50.971883  [**] [1:20000000:1] Snort alert [**] [Priority: 0] {TCP} 192.168.0.1:9001 -> 1.1.1.1:80
