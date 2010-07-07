@@ -87,10 +87,7 @@ class r2a:
 					self.sids.append(r.sid)
 
 					prevLen = len(self.packets)
-					print "PREVIOUS: %d" % prevLen
 					numPackets = len(self.ContentGen.packets)
-					print "TOTAL: %d" % numPackets
-
 					self.sidGroup[r.sid] = (prevLen, numPackets)
 
 					for p in self.ContentGen.packets:

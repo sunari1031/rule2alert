@@ -23,6 +23,7 @@ class TestSnort:
         self.loaded_sids = loaded_sids
         #self.cmd    = "snort -c %s -K none -q -A console -r %s" % (self.snort_conf, self.pcap)
 	self.cmd    = "snort -c /etc/snort/snort.conf -k none -q -A console -r %s" % (self.pcap)
+	#self.cmd    = "snort -c /etc/snort/snort.conf -k none -q -A fast -r %s" % (self.pcap)
 
     def run(self):
         p = Popen(self.cmd, shell=True, stdout=PIPE, stderr=PIPE)
