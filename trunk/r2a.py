@@ -42,6 +42,10 @@ class r2a:
 		self.rules_loaded = 0
 		#Collection of SIDS loaded
 		self.sids = []
+		#Association of SID to Packets
+		self.sidGroup = {}
+		#List of Failed SIDS
+		self.failSids = []
 		#Used in SID reproduction
 		self.count = None
 		self.manual = False
@@ -82,6 +86,13 @@ class r2a:
 
 					self.sids.append(r.sid)
 
+					prevLen = len(self.packets)
+					print "PREVIOUS: %d" % prevLen
+					numPackets = len(self.ContentGen.packets)
+					print "TOTAL: %d" % numPackets
+
+					self.sidGroup[r.sid] = (prevLen, numPackets)
+
 					for p in self.ContentGen.packets:
 						self.packets.append(p)
 
@@ -113,6 +124,17 @@ class r2a:
 			print "Running Suricata test..."
 			self.test_suricata()
 
+		if (self.options.testSnort or self.options.testSuricata) and self.options.failStream:
+			if not self.failSids: return
+			for sid in self.failSids:
+				start, length = self.sidGroup[sid]
+				end = start + (length-1)
+				if length == 1:
+					r = self.packets[start]
+				elif length > 1:
+					r = self.packets[start:start+(length-1)]
+				wrpcap("output/failstreams/%s.pcap" % sid, r)
+
 	#Reads in the rule file specified by the user
 	def loadRules(self, rule_file):
 		f = open(rule_file, 'r')
@@ -126,19 +148,20 @@ class r2a:
 
 	def test_snort(self):
 		t = TestSnort(self.options.pcap, self.sids)
-		t.run()
+		self.failSids = t.run()
 
 	def test_suricata(self):
 		t = TestSuricata(self.options.pcap, self.sids, self.options.rule_file)
-		t.run()
+		self.failSids = t.run()
 
 #Parses arguments that are passed in through the cli
 def parseArgs():
 	usage = "usage: python r2a.py [-vt] -f rule_file -c snort_config -w pcap"
 	parser = OptionParser(usage)
 	
-	parser.add_option("-f", help="Read in snort rule file", action="store", type="string", dest="rule_file")
 	parser.add_option("-c", help="Read in snort configuration file", action="store", type="string", dest="snort_conf")
+	parser.add_option("-f", help="Read in snort rule file", action="store", type="string", dest="rule_file")
+	parser.add_option("-F", help="Write failed streams to pcap", action="store_true", dest="failStream")
 	parser.add_option("-w", help="Name of pcap file", action="store", type="string", dest="pcap")
 
 	parser.add_option("-v", help="Verbose hex output of raw alert", action="store_true", dest="hex")
