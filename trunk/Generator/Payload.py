@@ -188,30 +188,42 @@ class PayloadGenerator:
 		#		flag = "A"
 		#	elif self.flow.stateless:
 		#		flag = "A"
+		#if self.flip:
+		#	source_ip = self.ip.dst
+		#	source_port = self.protocol.dport
+		#	dest_ip = self.ip.src
+		#	dest_port = self.protocol.sport
 
 		if self.proto == "tcp":
 			seq_num, ack_num = self.get_seqack()
 			if seq_num is None:
-				#seq_num = RandShort()
-				#ack_num = RandShort()
-				#seq_num = 9001
-				#ack_num = 9002
 				seq_num = random.randint(1024,(2**32)-1)
 				ack_num = random.randint(1024,(2**32)-1)
 
-			p = IP(src=source_ip, dst=dest_ip)/TCP(flags=flag, sport=source_port, dport=dest_port, seq=seq_num, ack=ack_num)/payload
+			#This is the actual data packet that will be sent containing the payload
+			p = Ether()/IP(src=source_ip, dst=dest_ip)/TCP(flags=flag, sport=source_port, dport=dest_port, seq=seq_num, ack=ack_num)/payload
 
-			##rst = IP(src=source_ip, dst=dest_ip)/TCP(flags="R", sport=source_port, dport=dest_port)
-			new_seq = seq_num + len(payload)
-			fin_ack = IP(src=source_ip, dst=dest_ip)/TCP(flags="FA", sport=source_port, dport=dest_port, seq=new_seq, ack=ack_num)
-			ack     = IP(src=dest_ip, dst=source_ip)/TCP(flags="A", sport=dest_port, dport=source_port, seq=ack_num, ack=fin_ack.seq+1)
+			#We need to ACK the packet
+			returnAck = Ether()/IP(src=dest_ip, dst=source_ip)/TCP(flags="A", sport=dest_port, dport=source_port, seq=p.ack, ack=(p.seq + len(p[Raw])))
+
+			
+			#Now we build the Finshake
+			finAck = Ether()/IP(src=source_ip, dst=dest_ip)/TCP(flags="FA", sport=source_port, dport=dest_port, seq=returnAck.ack, ack=returnAck.seq)
+			finalAck = Ether()/IP(src=dest_ip, dst=source_ip)/TCP(flags="A", sport=dest_port, dport=source_port, seq=finAck.ack, ack=finAck.seq+1)
+
+
+			#fin_ack = IP(src=source_ip, dst=dest_ip)/TCP(flags="FA", sport=source_port, dport=dest_port, seq=new_seq, ack=ack_num)
+			#ack     = IP(src=dest_ip, dst=source_ip)/TCP(flags="A", sport=dest_port, dport=source_port, seq=ack_num, ack=fin_ack.seq+1)
 	
 			self.packets.append(p)
-			self.packets.append(fin_ack)
-			self.packets.append(ack)
+			self.packets.append(returnAck)
+			self.packets.append(finAck)
+			self.packets.append(finalAck)
+			#self.packets.append(fin_ack)
+			#self.packets.append(ack)
 
 		elif self.proto == "udp":
-			p = IP(src=source_ip, dst=dest_ip)/UDP(sport=source_port, dport=dest_port)/payload
+			p = Ether()/IP(src=source_ip, dst=dest_ip)/UDP(sport=source_port, dport=dest_port)/payload
 	
 			self.packets.append(p)
 
@@ -228,16 +240,7 @@ class PayloadGenerator:
 		portsrc = self.protocol.sport
 		portdst = self.protocol.dport
 	
-		#if self.home == "dst":
-		#	print "FLIP!"
-		#	self.flip = True
-		#	ipsrc = self.ip.dst
-		#	ipdst = self.ip.src
-		#	portsrc = self.protocol.dport
-		#	portdst = self.protocol.sport
-
 		#This is for to_client rules.  We need to change the source/dest
-
 		if self.flow.to_client or self.flow.from_server:
 			self.flip = True
 			ipsrc = self.ip.dst
@@ -248,16 +251,11 @@ class PayloadGenerator:
 		client_isn = random.randint(1024, (2**32)-1)
 		server_isn = random.randint(1024, (2**32)-1)
 
-		#client_isn = 1932
-		#server_isn = 1059
-		#client_isn = RandShort()
-		#server_isn = RandShort()
+		syn = Ether()/IP(src=ipsrc, dst=ipdst)/TCP(flags="S", sport=portsrc, dport=portdst, seq=client_isn)
 
-		syn = IP(src=ipsrc, dst=ipdst)/TCP(flags="S", sport=portsrc, dport=portdst, seq=client_isn)
+		synack = Ether()/IP(src=ipdst, dst=ipsrc)/TCP(flags="SA", sport=portdst, dport=portsrc, seq=server_isn, ack=syn.seq+1)
 
-		synack = IP(src=ipdst, dst=ipsrc)/TCP(flags="SA", sport=portdst, dport=portsrc, seq=server_isn, ack=syn.seq+1)
-
-		ack = IP(src=ipsrc, dst=ipdst)/TCP(flags="A", sport=portsrc, dport=portdst, seq=syn.seq+1, ack=synack.seq+1)
+		ack = Ether()/IP(src=ipsrc, dst=ipdst)/TCP(flags="A", sport=portsrc, dport=portdst, seq=syn.seq+1, ack=synack.seq+1)
 	
 		self.packets.append(syn)
 		self.packets.append(synack)
