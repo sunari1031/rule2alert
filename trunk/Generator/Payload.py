@@ -212,15 +212,22 @@ class PayloadGenerator:
 			finalAck = IP(src=dest_ip, dst=source_ip)/TCP(flags="A", sport=dest_port, dport=source_port, seq=finAck.ack, ack=finAck.seq+1)
 
 
-			#fin_ack = IP(src=source_ip, dst=dest_ip)/TCP(flags="FA", sport=source_port, dport=dest_port, seq=new_seq, ack=ack_num)
-			#ack     = IP(src=dest_ip, dst=source_ip)/TCP(flags="A", sport=dest_port, dport=source_port, seq=ack_num, ack=fin_ack.seq+1)
-	
 			self.packets.append(p)
 			self.packets.append(returnAck)
 			self.packets.append(finAck)
 			self.packets.append(finalAck)
-			#self.packets.append(fin_ack)
-			#self.packets.append(ack)
+
+			#Here we set the MSS to the size of the payload
+			for packet in self.packets:
+				if not TCP in packet or not Raw in p:
+					continue
+
+				mssLen = len(p[Raw])
+
+				packet[TCP].options = []
+				packet[TCP].options.append(('MSS', mssLen))
+
+				packet[TCP].window = mssLen 
 
 		elif self.proto == "udp":
 			p = IP(src=source_ip, dst=dest_ip)/UDP(sport=source_port, dport=dest_port)/payload
