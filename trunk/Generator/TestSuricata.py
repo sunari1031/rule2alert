@@ -51,8 +51,8 @@ class TestSuricata:
             print "Successfully alerted on all loaded rules"
         #elif len(self.alerts) < len(self.loaded_sids):
 	else:
-            f = open("output/fail.log",'w')
-            f2 = open("output/success.log",'w')
+            f = open("output/fail_suricata.log",'w')
+            f2 = open("output/success_suricata.log",'w')
             missed = 0
             success = 0
             for sid in self.loaded_sids:

@@ -47,8 +47,8 @@ class TestSnort:
             print "Successfully alerted on all loaded rules"
         #elif len(self.alerts) < len(self.loaded_sids):
 	else:
-            f = open("output/fail.log",'w')
-            f2 = open("output/success.log",'w')
+            f = open("output/fail_snort.log",'w')
+            f2 = open("output/success_snort.log",'w')
             missed = 0
             success = 0
             for sid in self.loaded_sids:
