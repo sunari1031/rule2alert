@@ -157,10 +157,9 @@ class r2a:
 
 	def evasion(self):
 		if self.options.evasion == "1":
-			print "Fake RST Evasion"
 			e = Evasion(self.ContentGen.packets)
-			self.ContentGen.packets = e.fakeRst()
-			print "\tCredit: %s" % e.credit
+			self.ContentGen.packets = e.alteredAck()
+			print "Altered ACK Evsaion - Credit: %s" % e.credit
 		else:
 			return
 

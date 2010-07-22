@@ -19,11 +19,9 @@ class Evasion:
 		self.credit = ""
 		self.packets = packets
 
-	def fakeRst(self):
+	def alteredAck(self):
 		self.credit = "Judy Novak"
 		self.type   = "client"
-		#Store the original ACK
-		#realAck = self.packets[2]
 		
 		#Create the RST
 		source      = self.packets[2][IP].src
@@ -37,18 +35,17 @@ class Evasion:
 
 		rst = IP(src=destination, dst=source)/TCP(sport=dstport, dport=srcport, flags="R", seq=acknum)
 
-		#The rst packet needs to go after packets[2]
+		#The rst packet needs to go after the fake rst
 		store = []
 		for i in range(5):
 			store.append(self.packets.pop())
 		store.reverse()
 
-		#realAck[TCP].ack = realAck[TCP].ack - 1
-
-		#Append the RST followed by the original ACK
+		#Append the fake ACK followed by the RST
 		self.packets.append(fakeAck)
 		self.packets.append(rst)
 
+		#Tack on all of the original packets
 		for packet in store:
 			self.packets.append(packet)
 
