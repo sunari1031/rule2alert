@@ -5,6 +5,7 @@ from Parser.SnortConf import *
 from Generator.Payload import *
 from Generator.TestSnort import *
 from Generator.TestSuricata import *
+from Generator.Evasion import *
 from optparse import OptionParser
 import os,sys
 import re
@@ -84,6 +85,9 @@ class r2a:
 
 					self.ContentGen.build()
 
+					if self.options.evasion:
+						self.evasion()
+
 					self.sids.append(r.sid)
 
 					prevLen = len(self.packets)
@@ -151,9 +155,18 @@ class r2a:
 		t = TestSuricata(self.options.pcap, self.sids, self.options.rule_file)
 		self.failSids = t.run()
 
+	def evasion(self):
+		if self.options.evasion == "1":
+			print "Fake RST Evasion"
+			e = Evasion(self.ContentGen.packets)
+			self.ContentGen.packets = e.fakeRst()
+			print "\tCredit: %s" % e.credit
+		else:
+			return
+
 #Parses arguments that are passed in through the cli
 def parseArgs():
-	usage = "usage: python r2a.py [-vt] -f rule_file -c snort_config -w pcap"
+	usage = "usage: python r2a.py [-vt] [-e<num>] -f rule_file -c snort_config -w pcap\nEvasion Techniques in evasion.txt"
 	parser = OptionParser(usage)
 	
 	parser.add_option("-c", help="Read in snort configuration file", action="store", type="string", dest="snort_conf")
@@ -168,6 +181,7 @@ def parseArgs():
 	parser.add_option("-e", help="Set $EXTERNAL_NET IP Address", action="store", type="string", dest="extNet")
 	parser.add_option("-s", help="Manual SID Selection", action="store", type="string", dest="manualSid")
 	parser.add_option("-n", help="Number of times to alert SID", action="store", type="string", dest="manualNum")
+	parser.add_option("-E", help="Evasion Technique", action="store", type="string", dest="evasion")
 
 	if len(sys.argv) == 1:
 		parser.print_help()
