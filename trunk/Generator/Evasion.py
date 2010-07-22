@@ -23,29 +23,31 @@ class Evasion:
 		self.credit = "Judy Novak"
 		self.type   = "client"
 		#Store the original ACK
-		realAck = self.packets[2]
+		#realAck = self.packets[2]
 		
-		#Increase the stored ACK's ACK #
-		self.packets[2][TCP].ack += 1
-
 		#Create the RST
-		source      = self.packets[2][IP].dst
-		destination = self.packets[2][IP].src
-		srcport     = self.packets[2][TCP].dport
-		dstport     = self.packets[2][TCP].sport
-		seqnum      = self.packets[2][TCP].ack
+		source      = self.packets[2][IP].src
+		destination = self.packets[2][IP].dst
+		srcport     = self.packets[2][TCP].sport
+		dstport     = self.packets[2][TCP].dport
+		seqnum      = self.packets[2][TCP].seq
+		acknum      = self.packets[2][TCP].ack
 
-		rst = IP(src=source, dst=destination)/TCP(sport=srcport, dport=dstport, flags="R", seq=seqnum)
+		fakeAck = IP(src=source, dst=destination)/TCP(sport=srcport, dport=dstport, flags="A", seq=seqnum, ack=acknum+1)
+
+		rst = IP(src=destination, dst=source)/TCP(sport=dstport, dport=srcport, flags="R", seq=acknum)
 
 		#The rst packet needs to go after packets[2]
 		store = []
-		for i in range(4):
+		for i in range(5):
 			store.append(self.packets.pop())
 		store.reverse()
 
+		#realAck[TCP].ack = realAck[TCP].ack - 1
+
 		#Append the RST followed by the original ACK
+		self.packets.append(fakeAck)
 		self.packets.append(rst)
-		self.packets.append(realAck)
 
 		for packet in store:
 			self.packets.append(packet)

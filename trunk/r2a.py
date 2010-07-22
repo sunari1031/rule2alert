@@ -166,7 +166,7 @@ class r2a:
 
 #Parses arguments that are passed in through the cli
 def parseArgs():
-	usage = "usage: python r2a.py [-vt] [-e<num>] -f rule_file -c snort_config -w pcap\nEvasion Techniques in evasion.txt"
+	usage = "usage: python r2a.py [-vtT] -f rule_file -e <EXTERNAL IP> -m <HOME IP> -w pcap [-E<num>]\nEvasion Techniques in evasion.txt"
 	parser = OptionParser(usage)
 	
 	parser.add_option("-c", help="Read in snort configuration file", action="store", type="string", dest="snort_conf")
