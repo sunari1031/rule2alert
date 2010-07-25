@@ -9,7 +9,8 @@
 
 import re,sys
 from binascii import *
-from RevRegex import *
+#from RevRegex import *
+import RevRegex2
 
 class RuleUriContent:
     def __init__(self, uricontent):
@@ -239,14 +240,20 @@ class Rule:
 
     def __init__(self,rule):
         #We need to flatten the rule here for pcre
-        r = RevRegex(rule)
-        r.flatten()
-        rule = r.rule
+        #r = RevRegex(rule)
+	if rule.find("pcre") != -1:
+		rule = RevRegex2.main(rule)
+        #r.flatten()
+        #rule = r.rule
 
-        p = re.compile(r'^(?P<general>[^\(]+)\s*\((?P<rawoptions>.*)\)\s*$')
-        m = p.search(rule)
-        general = m.group("general")
-        rawoptions = m.group("rawoptions")
+	try:
+		p = re.compile(r'^(?P<general>[^\(]+)\s*\((?P<rawoptions>.*)\)\s*$')
+		m = p.search(rule)
+        	general = m.group("general")
+        	rawoptions = m.group("rawoptions")
+	except:
+		#Error parsing rule
+		return
     
         if general != None and rawoptions != None:
             pg = re.compile(r'(?P<type>[^\s]+)\s+(?P<proto>[^\s]+)\s+(?P<rawsources>[^\s]+)\s+(?P<rawsrcports>[^\s]+)\s+(?P<direc>[^\s]+)\s+(?P<rawdestinations>[^\s]+)\s+(?P<rawdesports>[^\s]+)\s*')

@@ -71,6 +71,7 @@ class RevRegex:
 			tmp = re.sub("\?\|","\|",tmp)
 			tmp = re.sub("\?\)","\)",tmp)
 			#tmp = re.sub('\((.*?)[^\\\\]\|.*?\)','\\1',tmp)
+			
 			tmp = re.sub('\((.*?)\|.*?\)','\\1',tmp)
 
 			tmp = re.sub("^\^|\$$",'',tmp)
@@ -80,6 +81,10 @@ class RevRegex:
 
 			tmp = re.sub("\\\\s",' ',tmp)
 			tmp = re.sub("\\\\",'',tmp)
+
+			if tmp.find("(") != -1 and tmp.find("\\(") == -1:
+				tmp = re.sub("\(",'',tmp)
+				tmp = re.sub("\)",'',tmp)
 
 			if uri:
 				tmp = re.sub(' ','%20',tmp)

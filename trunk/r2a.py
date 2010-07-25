@@ -1,4 +1,7 @@
 #!/usr/bin/python
+'''
+@author: famousjs
+'''
 from scapy.all import *
 from Parser.RuleParser import *
 from Parser.SnortConf import *
@@ -85,8 +88,7 @@ class r2a:
 
 					self.ContentGen.build()
 
-					if self.options.evasion:
-						self.evasion()
+					if self.options.evasion: self.evasion()
 
 					self.sids.append(r.sid)
 
@@ -156,11 +158,17 @@ class r2a:
 		self.failSids = t.run()
 
 	def evasion(self):
-		if self.options.evasion == "1":
+		if not self.ContentGen.proto == "tcp" or not self.ContentGen.flow.established:
+			return
+
+		try:
 			e = Evasion(self.ContentGen.packets)
-			self.ContentGen.packets = e.alteredAck()
-			print "Altered ACK Evsaion - Credit: %s" % e.credit
-		else:
+			if self.options.evasion == "1":
+				self.ContentGen.packets = e.alteredAck()
+				print "Altered ACK Evsaion - Credit: %s" % e.credit
+
+			else: return
+		except:
 			return
 
 #Parses arguments that are passed in through the cli
